@@ -1,14 +1,19 @@
-use std::collections::HashSet;
-use std::iter::FromIterator;
+extern crate typenum;
+use bit_array::BitArray;
+use typenum::U8;
 
-fn part1(inp: &str) -> Result<i64, ()> {
+fn part1(inp: &str) -> Result<usize, ()> {
     // Parse input
-    let (nums, nums_set) = parse_input(inp);
+    let nums = parse_input(inp);
+
+    //Create bitmap with numbers that exist
+    let mut nums_bv = BitArray::<u32, typenum::U2048>::from_elem(false);
+    nums.iter().for_each(|num| nums_bv.set(*num, true));
 
     // Loop through nums
     for num in nums {
         // Check if the other number exists, if so, return answer
-        if nums_set.contains(&(2020 - num)) {
+        if nums_bv.get(2020 - num).unwrap() {
             return Ok(num * (2020 - num));
         }
     }
@@ -16,17 +21,21 @@ fn part1(inp: &str) -> Result<i64, ()> {
     return Err(());
 }
 
-fn part2(inp: &str) -> Result<i64, ()> {
+fn part2(inp: &str) -> Result<usize, ()> {
     // Parse input
-    let (nums, nums_set) = parse_input(inp);
+    let nums = parse_input(inp);
+
+    //Create bitmap with numbers that exist
+    let mut nums_bv = BitArray::<u32, typenum::U2048>::from_elem(false);
+    nums.iter().for_each(|num| nums_bv.set(*num, true));
 
     // Loop through nums
-    for numa in nums.iter() {
-        for numb in nums.iter() {
+    for (i, numa) in nums.iter().enumerate() {
+        for numb in nums.iter().skip(i) {
             if numa + numb > 2020 { continue ; }
 
             // Check if the final number exists, if so, return answer
-            if nums_set.contains(&(2020 - numa - numb)) {
+            if nums_bv.get(2020 - numa - numb).unwrap() {
                 return Ok(numa * numb * (2020 - numa - numb));
             }
         }
@@ -35,12 +44,9 @@ fn part2(inp: &str) -> Result<i64, ()> {
     return Err(());
 }
 
-fn parse_input(inp: &str) -> (Vec<i64>, HashSet<i64>) {
+fn parse_input(inp: &str) -> Vec<usize> {
     //Parse input into vec
-    let nums: Vec<i64> = inp.lines().map(|num| num.parse().unwrap()).collect();
-    //Parse vec into hashset
-    let nums_set: HashSet<i64> = nums.iter().cloned().collect();
-    return (nums, nums_set);
+    return inp.lines().map(|num| num.parse().unwrap()).collect();
 }
 
 #[cfg(test)]
