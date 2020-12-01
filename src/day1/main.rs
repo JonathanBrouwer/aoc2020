@@ -38,10 +38,22 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_part1_ex1() {
+        let result = part1(include_str!("example")).unwrap();
+        assert_eq!(514579, result);
+    }
+
+    #[test]
     fn test_part1_real() {
         let result = part1(include_str!("input")).unwrap();
         println!("Part 1: {}", result);
         assert_eq!(898299, result);
+    }
+
+    #[test]
+    fn test_part2_ex1() {
+        let result = part2(include_str!("example")).unwrap();
+        assert_eq!(241861950, result);
     }
 
     #[test]
