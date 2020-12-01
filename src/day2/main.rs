@@ -13,9 +13,7 @@ fn part2(inp: &str) -> Result<i64, ()> {
     return Err(());
 }
 
-fn parse_input(inp: &str) -> () {
-
-}
+fn parse_input(inp: &str) -> () {}
 
 #[cfg(test)]
 mod tests {
