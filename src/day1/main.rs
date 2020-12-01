@@ -22,20 +22,23 @@ fn part1(inp: &str) -> Result<usize, ()> {
 
 fn part2(inp: &str) -> Result<usize, ()> {
     // Parse input
-    let nums = parse_input(inp);
+    let mut nums = parse_input(inp);
+    nums.sort_unstable();
 
     //Create bitmap with numbers that exist
-    let mut nums_bv = BitArray::<u32, typenum::U2048>::from_elem(false);
-    nums.iter().for_each(|num| nums_bv.set(*num, true));
+    let mut nums_bitmap = [false; 2048];
+    nums.iter().for_each(|num| nums_bitmap[*num] = true);
 
     // Loop through nums
     for (i, numa) in nums.iter().enumerate() {
-        for numb in nums.iter().skip(i) {
-            if numa + numb > 2020 { continue ; }
+        let inv_numa = 2020 - numa;
+        for numb in nums.iter().skip(i+1) {
+            if *numb > inv_numa { continue; }
 
             // Check if the final number exists, if so, return answer
-            if nums_bv.get(2020 - numa - numb).unwrap() {
-                return Ok(numa * numb * (2020 - numa - numb));
+            let numc = inv_numa - numb;
+            if nums_bitmap[numc] {
+                return Ok(numa * numb * numc);
             }
         }
     }
@@ -74,13 +77,22 @@ pub mod tests {
 
     #[test]
     fn test_part2_real() {
-        let now = SystemTime::now();
-
         let result = part2(include_str!("input")).unwrap();
         println!("Part 2: {}", result);
         assert_eq!(143933922, result);
+    }
 
-        println!("Part 2 time: {}", now.elapsed().unwrap().as_micros());
+    #[test]
+    fn test_part2_bench() {
+        let now = SystemTime::now();
+
+        let count = 1000000;
+        let input = include_str!("input");
+        for _ in 0..count {
+            part2(input).unwrap();
+        }
+
+        println!("Part 2 time: {} ns", now.elapsed().unwrap().as_nanos()/count);
     }
 }
 
