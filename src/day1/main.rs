@@ -23,6 +23,8 @@ fn part2(inp: &str) -> Result<i64, ()> {
     // Loop through nums
     for numa in nums.iter() {
         for numb in nums.iter() {
+            if numa + numb > 2020 { continue ; }
+
             // Check if the final number exists, if so, return answer
             if nums_set.contains(&(2020 - numa - numb)) {
                 return Ok(numa * numb * (2020 - numa - numb));
@@ -37,12 +39,12 @@ fn parse_input(inp: &str) -> (Vec<i64>, HashSet<i64>) {
     //Parse input into vec
     let nums: Vec<i64> = inp.lines().map(|num| num.parse().unwrap()).collect();
     //Parse vec into hashset
-    let nums_set: HashSet<i64> = HashSet::from_iter(nums.iter().cloned());
+    let nums_set: HashSet<i64> = nums.iter().cloned().collect();
     return (nums, nums_set);
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::*;
 
     #[test]
