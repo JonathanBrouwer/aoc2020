@@ -1,6 +1,5 @@
 extern crate typenum;
 use bit_array::BitArray;
-use typenum::U8;
 
 fn part1(inp: &str) -> Result<usize, ()> {
     // Parse input
@@ -52,6 +51,7 @@ fn parse_input(inp: &str) -> Vec<usize> {
 #[cfg(test)]
 pub mod tests {
     use super::*;
+    use std::time::SystemTime;
 
     #[test]
     fn test_part1_ex1() {
@@ -74,9 +74,13 @@ pub mod tests {
 
     #[test]
     fn test_part2_real() {
+        let now = SystemTime::now();
+
         let result = part2(include_str!("input")).unwrap();
         println!("Part 2: {}", result);
         assert_eq!(143933922, result);
+
+        println!("Part 2 time: {}", now.elapsed().unwrap().as_micros());
     }
 }
 

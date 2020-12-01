@@ -1,13 +1,15 @@
 fn part1(inp: &str) -> Result<i64, ()> {
     let input = parse_input(inp);
 
-    return Err(());
+    return Ok(0)
+    // return Err(())
 }
 
 fn part2(inp: &str) -> Result<i64, ()> {
     let input = parse_input(inp);
 
-    return Err(());
+    return Ok(0)
+    // return Err(())
 }
 
 fn parse_input(inp: &str) -> () {}
