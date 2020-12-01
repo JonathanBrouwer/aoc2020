@@ -86,7 +86,7 @@ pub mod tests {
     fn test_part2_bench() {
         let now = SystemTime::now();
 
-        let count = 1000000;
+        let count = 100000;
         let input = include_str!("input");
         for _ in 0..count {
             part2(input).unwrap();
