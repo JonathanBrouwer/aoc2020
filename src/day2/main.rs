@@ -1,7 +1,5 @@
 extern crate test;
 
-use std::time::SystemTime;
-
 fn part1(inp: &str) -> Result<usize, ()> {
     let input = parse_input(inp);
     return Ok(input.iter().filter(|p| p.is_valid_part1()).count());
@@ -58,7 +56,6 @@ impl Password<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::SystemTime;
     use test::Bencher;
 
     #[test]
