@@ -14,7 +14,8 @@ fn calc_perimeter(input: usize) -> usize {
 
 fn solve_for_size(input: usize) -> usize {
     for i in 1.. {
-        if area_of_regular_octagon(i) >= input {
+        let bag_size = area_of_regular_octagon(i);
+        if bag_size >= input {
             return i;
         }
     }
@@ -22,11 +23,14 @@ fn solve_for_size(input: usize) -> usize {
 }
 
 fn area_of_regular_octagon(side: usize) -> usize {
-    return 9*side*side - 4 * area_of_triangle(side);
+    let gridsize = 9*side*side;
+    let trianglesize = area_of_triangle(side);
+
+    return gridsize - 4*trianglesize;
 }
 
 fn area_of_triangle(side: usize) -> usize {
-    return (side * (side - 1)) / 2;
+    return (side * (side + 1)) / 2;
 }
 
 #[cfg(test)]
@@ -41,6 +45,13 @@ mod tests {
         assert_eq!(4, solve_for_size(104));
         assert_eq!(10, solve_for_size(680));
         assert_eq!(25, solve_for_size(4325));
+        assert_eq!(26, solve_for_size(4326));
+    }
+
+    #[test]
+    fn test_part1_area() {
+        assert_eq!(24, area_of_regular_octagon(2));
+        assert_eq!(57, area_of_regular_octagon(3));
     }
 
     #[test]
@@ -69,7 +80,7 @@ mod tests {
         let inputs: Vec<usize> = vec![4541617527, 1340822918, 747693561, 430825388, 369024007, 42712846];
         let result = part2(inputs).unwrap();
         println!("Part 2: {}", result);
-        assert_eq!(0, result);
+        assert_eq!(537816, result);
     }
 }
 
