@@ -1,41 +1,31 @@
+extern crate test;
+
 use std::time::SystemTime;
 
 fn part1(inp: &str) -> Result<usize, ()> {
     let input = parse_input(inp);
-    return Ok(input.iter().filter(
-        |l| {
-            let count = l.password.chars().filter(|c| *c == l.rule_letter).count();
-            l.rule_firstnum <= count && count <= l.rule_secondnum
-        }
-    ).count());
+    return Ok(input.iter().filter(|p| p.is_valid_part1()).count());
 }
 
 fn part2(inp: &str) -> Result<usize, ()> {
     let input = parse_input(inp);
-    return Ok(input.iter().filter(
-        |l| {
-            let let1 = l.password.chars().nth(l.rule_firstnum-1).unwrap() == l.rule_letter;
-            let let2 = l.password.chars().nth(l.rule_secondnum-1).unwrap() == l.rule_letter;
-            let1 ^ let2
-        }
-    ).count());
+    return Ok(input.iter().filter(|p| p.is_valid_part2()).count());
 }
 
-fn parse_input(inp: &str) -> Vec<Line> {
-    let now = SystemTime::now();
-
+#[inline]
+fn parse_input(inp: &str) -> Vec<Password> {
     let mut rtrn = Vec::new();
     for line in inp.lines() {
         rtrn.push(fast_parse_line(line))
     }
-    println!("Input parse time: {} ms", now.elapsed().unwrap().as_nanos());
     rtrn
 }
 
-fn fast_parse_line(line: &str) -> Line {
+#[inline]
+fn fast_parse_line(line: &str) -> Password {
     let splits = line.split(&['-', ':', ' '][..]);
     if let &[num1, num2, letter, _, pw] = splits.collect::<Vec<_>>().as_slice() {
-        return Line {
+        return Password {
             password: pw,
             rule_letter: letter.chars().next().unwrap(),
             rule_firstnum: num1.parse().unwrap(),
@@ -45,17 +35,31 @@ fn fast_parse_line(line: &str) -> Line {
     panic!()
 }
 
-struct Line<'a> {
+struct Password<'a> {
     password: &'a str,
     rule_letter: char,
     rule_firstnum: usize,
     rule_secondnum: usize
 }
 
+impl Password<'_> {
+    fn is_valid_part1(&self) -> bool {
+        let count = self.password.chars().filter(|c| *c == self.rule_letter).count();
+        self.rule_firstnum <= count && count <= self.rule_secondnum
+    }
+
+    fn is_valid_part2(&self) -> bool {
+        let let1 = self.password.chars().nth(self.rule_firstnum-1).unwrap() == self.rule_letter;
+        let let2 = self.password.chars().nth(self.rule_secondnum-1).unwrap() == self.rule_letter;
+        let1 ^ let2
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::time::SystemTime;
+    use test::Bencher;
 
     #[test]
     fn test_part1_ex1() {
@@ -83,17 +87,12 @@ mod tests {
         assert_eq!(251, result);
     }
 
-    #[test]
-    fn test_part2_bench() {
-        let now = SystemTime::now();
-
-        let count = 100;
-        let input = include_str!("input");
-        for _ in 0..count {
-            part2(input).unwrap();
-        }
-
-        println!("Part 2 time: {} ns", now.elapsed().unwrap().as_nanos()/count);
+    #[bench]
+    fn bench_part2(b: &mut Bencher) {
+        b.iter(|| {
+            let input = include_str!("input");
+            part2(test::black_box(input)).unwrap();
+        });
     }
 }
 

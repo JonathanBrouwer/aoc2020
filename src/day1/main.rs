@@ -52,7 +52,7 @@ fn parse_input(inp: &str) -> Vec<usize> {
 }
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
     use super::*;
     use std::time::SystemTime;
 
@@ -82,7 +82,6 @@ pub mod tests {
         assert_eq!(143933922, result);
     }
 
-    #[test]
     fn test_part2_bench() {
         let now = SystemTime::now();
 

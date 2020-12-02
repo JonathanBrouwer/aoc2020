@@ -14,6 +14,7 @@ name = "aoc2020"
 version = "0.1.0"
 dependencies = [
  "bit-array",
+ "lazy_static",
  "rayon",
  "scan_fmt",
  "typenum",
