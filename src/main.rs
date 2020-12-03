@@ -3,6 +3,7 @@
 mod template;
 mod day1;
 mod day2;
+mod day3;
 mod infinl;
 
 #[macro_use]
