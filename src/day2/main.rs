@@ -33,6 +33,17 @@ fn fast_parse_line(line: &str) -> Password {
     panic!()
 }
 
+// #[inline]
+// fn parse_line(line: &str) -> Password {
+//     let (num1, num2, letter, pw) = scan_fmt!(line, "{}-{} {}: {}", usize, usize, char, String).unwrap();
+//     return Password {
+//         password: &pw,
+//         rule_letter: letter,
+//         rule_firstnum: num1,
+//         rule_secondnum: num2
+//     }
+// }
+
 struct Password<'a> {
     password: &'a str,
     rule_letter: char,
