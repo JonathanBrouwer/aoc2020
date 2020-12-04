@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::error::Error;
+use std::iter::FromIterator;
 
 #[macro_use]
 mod macro_check {
@@ -25,20 +26,18 @@ fn part2(inp: &str) -> Result<usize, ()> {
 }
 
 fn parse_input<'a>(inp: &'a str) -> Vec<Passport> {
-    let mut passports = vec![Passport{ data: HashMap::new() }];
-
-    for line in inp.lines() {
-        if line.is_empty() {
-            passports.push(Passport{ data: HashMap::new() });
+    //For each passport
+    inp.split("\n\n").into_iter().map(|pp| {
+        //Create a new passport
+        Passport {
+            //Split passport string into key:value pairs
+            data: HashMap::from_iter(pp.split(&['\n', ' '][..]).into_iter().map(|entry| {
+                //For each pair, split on : and create pair for the hashmap
+                let kv: Vec<&str> = entry.split(":").collect();
+                (kv[0], kv[1])
+            }))
         }
-        else {
-            for pair in line.split(" ") {
-                let p: Vec<&'a str> = pair.split(":").collect();
-                passports.last_mut().unwrap().data.insert(p[0], p[1]);
-            }
-        }
-    }
-    passports
+    }).collect()
 }
 
 struct Passport<'a> {
@@ -57,15 +56,15 @@ impl Passport<'_> {
 
         //BYR
         let byr = self.data.get("byr").unwrap().parse::<usize>().unwrap();
-        check! (byr >= 1920 && byr <= 2002 );
+        check! ( (1920..=2002).contains(&byr) );
 
         //IYR
         let iyr = self.data.get("iyr").unwrap().parse::<usize>().unwrap();
-        check! (iyr >= 2010 && iyr <= 2020 );
+        check! ( (2010..=2020).contains(&iyr) );
 
         //EYR
         let eyr = self.data.get("eyr").unwrap().parse::<usize>().unwrap();
-        check!( eyr >= 2020 && eyr <= 2030 );
+        check!( (2020..=2030).contains(&eyr) );
 
         //HGT
         let hgt = self.data.get("hgt").unwrap();
