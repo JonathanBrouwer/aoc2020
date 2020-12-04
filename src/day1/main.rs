@@ -1,4 +1,5 @@
 extern crate typenum;
+
 use bit_array::BitArray;
 
 fn part1(inp: &str) -> Result<usize, ()> {
@@ -32,7 +33,7 @@ fn part2(inp: &str) -> Result<usize, ()> {
     // Loop through nums
     for (i, numa) in nums.iter().enumerate() {
         let inv_numa = 2020 - numa;
-        for numb in nums.iter().skip(i+1) {
+        for numb in nums.iter().skip(i + 1) {
             if *numb > inv_numa { continue; }
 
             // Check if the final number exists, if so, return answer
@@ -53,8 +54,9 @@ fn parse_input(inp: &str) -> Vec<usize> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::time::SystemTime;
+
+    use super::*;
 
     #[test]
     fn test_part1_ex1() {
@@ -91,7 +93,7 @@ mod tests {
             part2(input).unwrap();
         }
 
-        println!("Part 2 time: {} ns", now.elapsed().unwrap().as_nanos()/count);
+        println!("Part 2 time: {} ns", now.elapsed().unwrap().as_nanos() / count);
     }
 }
 

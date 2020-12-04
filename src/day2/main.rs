@@ -27,8 +27,8 @@ fn fast_parse_line(line: &str) -> Password {
             password: pw,
             rule_letter: letter.chars().next().unwrap(),
             rule_firstnum: num1.parse().unwrap(),
-            rule_secondnum: num2.parse().unwrap()
-        }
+            rule_secondnum: num2.parse().unwrap(),
+        };
     }
     panic!()
 }
@@ -48,7 +48,7 @@ struct Password<'a> {
     password: &'a str,
     rule_letter: char,
     rule_firstnum: usize,
-    rule_secondnum: usize
+    rule_secondnum: usize,
 }
 
 impl Password<'_> {
@@ -58,16 +58,17 @@ impl Password<'_> {
     }
 
     fn is_valid_part2(&self) -> bool {
-        let let1 = self.password.chars().nth(self.rule_firstnum-1).unwrap() == self.rule_letter;
-        let let2 = self.password.chars().nth(self.rule_secondnum-1).unwrap() == self.rule_letter;
+        let let1 = self.password.chars().nth(self.rule_firstnum - 1).unwrap() == self.rule_letter;
+        let let2 = self.password.chars().nth(self.rule_secondnum - 1).unwrap() == self.rule_letter;
         let1 ^ let2
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test::Bencher;
+
+    use super::*;
 
     #[test]
     fn test_part1_ex1() {

@@ -11,16 +11,16 @@ fn part1(inp: &str) -> Result<usize, ()> {
         if line[x % line.len()] { total += 1; }
         x += 3;
     }
-    return Ok(total)
+    return Ok(total);
 }
 
 fn part2(inp: &str) -> Result<usize, ()> {
     let input = parse_input(inp);
-    let slopes: Vec<(usize, usize)> = vec![(1,1), (3,1), (5,1), (7,1), (1,2)];
+    let slopes: Vec<(usize, usize)> = vec![(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)];
 
     //Iterate through all slopes
     Ok(slopes.iter().map(|slope| {
-        let mut pos = (0,0);
+        let mut pos = (0, 0);
         let mut subtotal = 0;
 
         //Just keep walking over positions until we reach the bottom

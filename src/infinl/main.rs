@@ -23,10 +23,10 @@ fn solve_for_size(input: usize) -> usize {
 }
 
 fn area_of_regular_octagon(side: usize) -> usize {
-    let gridsize = 9*side*side;
+    let gridsize = 9 * side * side;
     let trianglesize = area_of_triangle(side);
 
-    return gridsize - 4*trianglesize;
+    return gridsize - 4 * trianglesize;
 }
 
 fn area_of_triangle(side: usize) -> usize {

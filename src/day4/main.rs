@@ -8,7 +8,7 @@ mod macro_check {
         ( $x:expr ) => {
             {
                 if(!($x)) {
-                    return false;
+                    return None;
                 }
             }
         };
@@ -22,7 +22,7 @@ fn part1(inp: &str) -> Result<usize, ()> {
 
 fn part2(inp: &str) -> Result<usize, ()> {
     let input = parse_input(inp);
-    return Ok(input.iter().filter(|&p| p.validate_part2()).count());
+    return Ok(input.iter().filter_map(|p| p.validate_part2()).count());
 }
 
 fn parse_input<'a>(inp: &'a str) -> Vec<Passport> {
@@ -45,55 +45,57 @@ struct Passport<'a> {
 }
 
 impl Passport<'_> {
-
     fn validate_part1(&self) -> bool {
         let req_fields = ["byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"];
-        return req_fields.iter().filter(|&f| self.data.contains_key(f)).count() == 7
+        return req_fields.iter().filter(|&f| self.data.contains_key(f)).count() == 7;
     }
 
-    fn validate_part2(&self) -> bool {
+    fn validate_part2(&self) -> Option<()> {
         check!(self.validate_part1());
 
         //BYR
-        let byr = self.data.get("byr").unwrap().parse::<usize>().unwrap();
-        check! ( (1920..=2002).contains(&byr) );
+        let byr = self.data.get("byr")?.parse::<usize>().ok()?;
+        check!( (1920..=2002).contains(&byr) );
 
         //IYR
-        let iyr = self.data.get("iyr").unwrap().parse::<usize>().unwrap();
-        check! ( (2010..=2020).contains(&iyr) );
+        let iyr = self.data.get("iyr")?.parse::<usize>().ok()?;
+        check!( (2010..=2020).contains(&iyr) );
 
         //EYR
-        let eyr = self.data.get("eyr").unwrap().parse::<usize>().unwrap();
+        let eyr = self.data.get("eyr")?.parse::<usize>().ok()?;
         check!( (2020..=2030).contains(&eyr) );
 
         //HGT
-        let hgt = self.data.get("hgt").unwrap();
-        let hgt_num = hgt[..hgt.len() - 2].parse::<usize>();
-        check!(hgt_num.is_ok());
-        let hgt_num = hgt_num.unwrap();
-        let hgt_unit = &hgt[hgt.len() - 2..];
-        if hgt_unit == "cm" {
-            check!(hgt_num >= 150 && hgt_num <= 193);
-        }else if hgt_unit == "in" {
-            check!(hgt_num >= 59 && hgt_num <= 76);
-        }else{ return false; }
+        let hgt = *self.data.get("hgt")?;
+        let hgt_num = hgt[..hgt.len() - 2].parse::<usize>().ok()?;
+        match hgt {
+            //If height is in cm, check range
+            hgt if hgt.strip_suffix("cm").is_some() => {
+                check!((150..=193).contains(&hgt_num))
+            }
+            //If height is in in, check range
+            hgt if hgt.strip_suffix("in").is_some() => {
+                check!((59..=76).contains(&hgt_num))
+            }
+            _ => return None
+        }
 
         //HCL
-        let hcl = *self.data.get("hcl").unwrap();
-        check!(hcl.chars().next().unwrap() == '#');
+        let hcl = *self.data.get("hcl")?;
+        check!(hcl.chars().next()? == '#');
         check!(hcl.chars().count() == 7);
-        check!(hcl.chars().skip(1).all(|f| f.is_numeric() || ['a', 'b', 'c', 'd', 'e', 'f'].contains(&f)));
+        check!(hcl.chars().skip(1).all(|f| f.is_numeric() || ('a'..='f').contains(&f)));
 
         //ECL
-        let ecl  = *self.data.get("ecl").unwrap();
+        let ecl = *self.data.get("ecl")?;
         check!(["amb", "blu", "brn", "gry", "grn", "hzl", "oth"].contains(&ecl));
 
         //PID
-        let pid = *self.data.get("pid").unwrap();
+        let pid = *self.data.get("pid")?;
         check!(pid.len() == 9);
         check!(pid.chars().all(|c| c.is_numeric()));
 
-        return true;
+        return Some(());
     }
 }
 
