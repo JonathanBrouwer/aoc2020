@@ -83,18 +83,6 @@ mod tests {
         println!("Part 2: {}", result);
         assert_eq!(143933922, result);
     }
-
-    fn test_part2_bench() {
-        let now = SystemTime::now();
-
-        let count = 100000;
-        let input = include_str!("input");
-        for _ in 0..count {
-            part2(input).unwrap();
-        }
-
-        println!("Part 2 time: {} ns", now.elapsed().unwrap().as_nanos() / count);
-    }
 }
 
 
