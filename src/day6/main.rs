@@ -18,7 +18,7 @@ fn solve<F>(inp: &str, mut foldfun: F) -> Result<u32, ()>
     return Ok(inp.split("\n\n").map(|group| {
         //Map each person to a bitmap of which letters it consists of
         group.lines().map(|person| {
-            person.bytes().fold(0 as u32, |acc, c| {
+            person.bytes().fold(0u32, |acc, c| {
                 acc | 1 << (c - b'a')
             })
         })
