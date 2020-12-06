@@ -1,28 +1,21 @@
 extern crate test;
 
 fn part1(inp: &str) -> Result<usize, ()> {
-    let input = parse_input(inp);
-    //For each group
-    return Ok(input.iter().map(|group| {
-        //Map each person to a bitmap of which letters it consists of
-        group.iter().map(|&person| {
-            //Create bitmap
-            let mut bitmap = [false; 26];
-            person.chars().for_each(|c| bitmap[c as usize - 'a' as usize] = true);
-            //Convert the bitmap to usize
-            bitmap.iter().fold(0, |acc, b| acc * 2 + *b as usize)
-
-            //Find intersection of bitmap, then count amount of flags set
-        }).fold_first(|a, b| a | b).unwrap().count_ones() as usize
-    }).sum::<usize>())
+    solve(inp, |a, b| (a | b))
 }
 
 fn part2(inp: &str) -> Result<usize, ()> {
-    let input = parse_input(inp);
+    solve(inp, |a, b| (a & b))
+}
+
+#[inline]
+fn solve<F>(inp: &str, mut foldfun: F) -> Result<usize, ()>
+    where F: FnMut(usize, usize) -> usize {
+
     //For each group
-    return Ok(input.iter().map(|group| {
+    return Ok(inp.split("\n\n").map(|group| {
         //Map each person to a bitmap of which letters it consists of
-        group.iter().map(|&person| {
+        group.lines().map(|person| {
             //Create bitmap
             let mut bitmap = [false; 26];
             person.chars().for_each(|c| bitmap[c as usize - 'a' as usize] = true);
@@ -30,20 +23,15 @@ fn part2(inp: &str) -> Result<usize, ()> {
             bitmap.iter().fold(0, |acc, b| acc * 2 + *b as usize)
 
             //Find intersection of bitmap, then count amount of flags set
-        }).fold_first(|a, b| a & b).unwrap().count_ones() as usize
-    }).sum::<usize>())
-}
-
-fn parse_input(inp: &str) -> Vec<Vec<&str>> {
-    inp.split("\n\n").map(|group| {
-        group.lines().collect()
-    }).collect()
+        }).fold_first(|a, b| foldfun(a, b)).unwrap().count_ones() as usize
+    }).sum::<usize>());
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test::Bencher;
+
+    use super::*;
 
     #[test]
     fn test_part1_ex1() {
@@ -88,17 +76,4 @@ mod tests {
             assert_eq!(3628, result);
         });
     }
-
-    #[bench]
-    fn bench_parse_input(b: &mut Bencher) {
-        let input: &str = test::black_box(include_str!("input"));
-        let correct_result = test::black_box(parse_input(input));
-        b.iter(|| {
-            let result = parse_input(input);
-            assert_eq!(correct_result, result);
-        });
-    }
 }
-
-
-
