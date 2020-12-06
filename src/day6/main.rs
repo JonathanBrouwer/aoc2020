@@ -1,7 +1,5 @@
 extern crate test;
 
-use bit_array::BitArray;
-
 fn part1(inp: &str) -> Result<u32, ()> {
     solve(inp, |a, b| (a | b))
 }
