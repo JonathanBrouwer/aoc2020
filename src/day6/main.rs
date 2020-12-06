@@ -1,30 +1,35 @@
 extern crate test;
 
-fn part1(inp: &str) -> Result<usize, ()> {
+use bit_array::BitArray;
+
+fn part1(inp: &str) -> Result<u32, ()> {
     solve(inp, |a, b| (a | b))
 }
 
-fn part2(inp: &str) -> Result<usize, ()> {
+fn part2(inp: &str) -> Result<u32, ()> {
     solve(inp, |a, b| (a & b))
 }
 
 #[inline]
-fn solve<F>(inp: &str, mut foldfun: F) -> Result<usize, ()>
-    where F: FnMut(usize, usize) -> usize {
+fn solve<F>(inp: &str, mut foldfun: F) -> Result<u32, ()>
+    where F: FnMut(u32, u32) -> u32 {
 
     //For each group
     return Ok(inp.split("\n\n").map(|group| {
         //Map each person to a bitmap of which letters it consists of
         group.lines().map(|person| {
             //Create bitmap
-            let mut bitmap = [false; 26];
-            person.chars().for_each(|c| bitmap[c as usize - 'a' as usize] = true);
-            //Convert the bitmap to usize
-            bitmap.iter().fold(0, |acc, b| acc * 2 + *b as usize)
-
-            //Find intersection of bitmap, then count amount of flags set
-        }).fold_first(|a, b| foldfun(a, b)).unwrap().count_ones() as usize
-    }).sum::<usize>());
+            let mut bv = BitArray::<u32, typenum::U32>::from_elem(false);
+            //Set flags in bitmap
+            person.chars().for_each(|c| bv.set(c as usize - 'a' as usize, true));
+            //Convert the bitmap to u32
+            bv.storage()[0]
+        })
+            //Fold the persons of the group using the foldfun
+            .fold_first(|a, b| foldfun(a, b))
+            //Count amount of 1 bits in the u32
+            .unwrap().count_ones() as u32
+    }).sum::<u32>());
 }
 
 #[cfg(test)]
