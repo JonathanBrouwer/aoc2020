@@ -10,7 +10,7 @@ fn part2(inp: &str) -> Result<u32, ()> {
     solve(inp, u32::bitand)
 }
 
-#[inline]
+#[inline(always)]
 fn solve<F>(inp: &str, mut foldfun: F) -> Result<u32, ()>
     where F: FnMut(u32, u32) -> u32 {
 
@@ -18,15 +18,9 @@ fn solve<F>(inp: &str, mut foldfun: F) -> Result<u32, ()>
     return Ok(inp.split("\n\n").map(|group| {
         //Map each person to a bitmap of which letters it consists of
         group.lines().map(|person| {
-            //Create bitmap
-            let mut bitmap = 0 as u32;
-            //Set flags in bitmap
-            person.chars().for_each(|c| {
-                let i = c as usize - 'a' as usize;
-                bitmap |= 1 << i;
-            });
-            //Return bitmap
-            bitmap
+            person.bytes().fold(0 as u32, |acc, c| {
+                acc | 1 << (c - b'a')
+            })
         })
             //Fold the persons of the group using the foldfun
             .fold_first(|a, b| foldfun(a, b))
