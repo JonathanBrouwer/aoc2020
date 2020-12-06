@@ -19,11 +19,14 @@ fn solve<F>(inp: &str, mut foldfun: F) -> Result<u32, ()>
         //Map each person to a bitmap of which letters it consists of
         group.lines().map(|person| {
             //Create bitmap
-            let mut bv = BitArray::<u32, typenum::U32>::from_elem(false);
+            let mut bitmap = 0 as u32;
             //Set flags in bitmap
-            person.chars().for_each(|c| bv.set(c as usize - 'a' as usize, true));
-            //Convert the bitmap to u32
-            bv.storage()[0]
+            person.chars().for_each(|c| {
+                let i = c as usize - 'a' as usize;
+                bitmap |= 1 << i;
+            });
+            //Return bitmap
+            bitmap
         })
             //Fold the persons of the group using the foldfun
             .fold_first(|a, b| foldfun(a, b))
