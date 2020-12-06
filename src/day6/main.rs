@@ -1,11 +1,13 @@
 extern crate test;
 
+use std::ops::{BitAnd, BitOr};
+
 fn part1(inp: &str) -> Result<u32, ()> {
-    solve(inp, |a, b| (a | b))
+    solve(inp, u32::bitor)
 }
 
 fn part2(inp: &str) -> Result<u32, ()> {
-    solve(inp, |a, b| (a & b))
+    solve(inp, u32::bitand)
 }
 
 #[inline]
