@@ -5,30 +5,42 @@ use std::collections::HashMap;
 use petgraph::visit::{Reversed, IntoNeighbors};
 
 fn part1(inp: &str) -> usize {
+    //Parse input into graph
     let graph = parse_input(inp);
+
+    //Do dfs on the graph
     let mut dfs = Dfs::new(&graph, "shiny gold bag");
 
+    //Count all nodes found
     let mut count = 0;
     while let Some(_) = dfs.next(&graph) {
         count += 1;
     }
 
+    //Substract 1, since we don't count the shiny gold bag itself
     return count - 1
 }
 
 fn part2(inp: &str) -> usize {
+    //Parse input into graph
     let mut graph = parse_input(inp);
 
+    //Toposort the graph
     let mut tps: Vec<&str> = petgraph::algo::toposort(&graph, None).unwrap();
-    let mut contains_in = HashMap::<&str, usize>::new();
 
+    //Walk over toposort
+    let mut contains_in = HashMap::<&str, usize>::new();
     for node in tps {
+        //For each node, keep track of the total amount of bags it contains
         let weight: usize = Reversed(&graph).neighbors(node).map(|nb| {
             (contains_in.get(nb).unwrap() + 1) * (*graph.edge_weight(nb, node).unwrap())
         }).sum();
         contains_in.insert(node, weight);
+
+        //Stop if we found the shiny gold bag
+        if node == "shiny gold bag" {return weight;}
     }
-    return *contains_in.get("shiny gold bag").unwrap();
+    unreachable!();
 }
 
 #[inline]
@@ -114,6 +126,14 @@ mod tests {
         b.iter(|| {
             let result = part2(input);
             assert_eq!(27526, result);
+        });
+    }
+
+    #[bench]
+    fn bench_input_parse(b: &mut Bencher) {
+        let input: &str = test::black_box(include_str!("input"));
+        b.iter(|| {
+            parse_input(input);
         });
     }
 }
