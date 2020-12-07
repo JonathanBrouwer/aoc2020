@@ -1,90 +1,56 @@
 extern crate test;
 
-use std::collections::{HashMap, HashSet};
+use petgraph::prelude::*;
+use std::collections::HashMap;
+use petgraph::visit::{Reversed, IntoNeighbors};
 
-fn part1(inp: &str) -> Result<usize, ()> {
-    let (input, input_rev) = parse_input(inp);
+fn part1(inp: &str) -> usize {
+    let graph = parse_input(inp);
+    let mut dfs = Dfs::new(&graph, "shiny gold bag");
 
-    let mut found = HashSet::new();
-    let mut found_to_continue = Vec::new();
-    found_to_continue.push("shiny gold bag");
-    found.insert("shiny gold bag");
-
-    while !found_to_continue.is_empty() {
-        let next = found_to_continue.remove(found_to_continue.len() - 1);
-        for &(name, _) in input_rev.get(next).unwrap_or(&Vec::new()) {
-            if !found.contains(name) {
-                found.insert(name);
-                found_to_continue.push(name);
-            }
-        }
+    let mut count = 0;
+    while let Some(_) = dfs.next(&graph) {
+        count += 1;
     }
 
-    return Ok(found.len() - 1);
+    return count - 1
 }
 
-fn part2(inp: &str) -> Result<usize, ()> {
-    let (input, input_rev) = parse_input(inp);
+fn part2(inp: &str) -> usize {
+    let mut graph = parse_input(inp);
 
-    let mut left: HashMap<&str, usize> = input.iter().map(|(&k, v)| (k, v.can_contain.len())).collect();
-    let mut done: Vec<&str> = left.iter().filter_map(|(&k, &v)| if v == 0 { Some(k) } else { None }).collect();
-    let mut done_total: HashMap<&str, usize> = done.iter().map(|&k| (k, 0)).collect();
+    let mut tps: Vec<&str> = petgraph::algo::toposort(&graph, None).unwrap();
+    let mut contains_in = HashMap::<&str, usize>::new();
 
-    while !done.is_empty() {
-        let next = done.remove(done.len() - 1);
-        for &(k,v) in input_rev.get(next).unwrap_or(&Vec::new()) {
-            left.insert(k, *left.get(k).unwrap() - 1);
-            //If this thing is now done
-            if *left.get(k).unwrap() == 0 {
-                done.push(k);
-                done_total.insert(k, input.get(k).unwrap().can_contain.iter().map(|&(k, v)| {
-                    (done_total.get(k).unwrap() + 1) * v
-                }).sum());
-            }
-        }
+    for node in tps {
+        let weight: usize = Reversed(&graph).neighbors(node).map(|nb| {
+            (contains_in.get(nb).unwrap() + 1) * (*graph.edge_weight(nb, node).unwrap())
+        }).sum();
+        contains_in.insert(node, weight);
     }
-
-    return Ok(*done_total.get("shiny gold bag").unwrap());
-    // return Err(())
+    return *contains_in.get("shiny gold bag").unwrap();
 }
 
 #[inline]
-fn parse_input(inp: &str) -> (HashMap<&str, Baggage>, HashMap<&str, Vec<(&str, usize)>>) {
-    let mut map = HashMap::new();
-
-    //Parse input
-    for line in inp.lines() {
-        //Remove dot at end
+fn parse_input(inp: &str) -> GraphMap<&str, usize, Directed> {
+    GraphMap::<&str, usize, Directed>::from_edges(inp.lines().flat_map(|line| {
+        // Remove dot at end of line
         let line = &line[..line.len() - 1];
+
         //Parse line into inputs and outputs
         let (inp, outp) = line.split_once(" contain ").unwrap();
         //Make sure name is not plural
         let inp = inp.strip_suffix("s").unwrap();
-        //Parse the outputs into a vec
-        let outps: Vec<(&str, usize)> = outp.split(", ").filter(|&c| c != "no other bags").map(parse_name).collect();
-        //Insert into map
-        map.insert(inp, Baggage { name: &inp, can_contain: outps });
-    }
 
-    //Set can_be_contained_in
-    let mut rev_map: HashMap<&str, Vec<(&str, usize)>> = HashMap::new();
-    for (&name, bag) in &map {
-        for (in_name, in_count) in bag.can_contain.clone() {
-            if !rev_map.contains_key(in_name) {
-                rev_map.insert(in_name, Vec::new());
-            }
-            let vec = rev_map.get_mut(in_name).unwrap();
-            vec.push((name, in_count));
-        }
-    }
-
-    (map, rev_map)
-}
-
-#[derive(Hash, Eq, PartialEq)]
-struct Baggage<'a> {
-    name: &'a str,
-    can_contain: Vec<(&'a str, usize)>,
+        //Return the edges
+        outp.split(", ")
+            //Skip things that have no outgoing edges
+            .filter(|&c| c != "no other bags")
+            //Parse name of outputs
+            .map(parse_name)
+            //Map to (source, dest, weight)
+            .map(|(k, v)| (k, inp, v)).collect::<Vec<_>>()
+    }))
 }
 
 fn parse_name<'a>(mut inp: &'a str) -> (&'a str, usize) {
@@ -97,37 +63,38 @@ fn parse_name<'a>(mut inp: &'a str) -> (&'a str, usize) {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test::Bencher;
+
+    use super::*;
 
     #[test]
     fn test_part1_ex1() {
-        let result = part1(include_str!("example1")).unwrap();
+        let result = part1(include_str!("example1"));
         assert_eq!(4, result);
     }
 
     #[test]
     fn test_part1_real() {
-        let result = part1(include_str!("input")).unwrap();
+        let result = part1(include_str!("input"));
         println!("Part 1: {}", result);
         assert_eq!(378, result);
     }
 
     #[test]
     fn test_part2_ex1() {
-        let result = part2(include_str!("example1")).unwrap();
+        let result = part2(include_str!("example1"));
         assert_eq!(32, result);
     }
 
     #[test]
     fn test_part2_ex2() {
-        let result = part2(include_str!("example2")).unwrap();
+        let result = part2(include_str!("example2"));
         assert_eq!(126, result);
     }
 
     #[test]
     fn test_part2_real() {
-        let result = part2(include_str!("input")).unwrap();
+        let result = part2(include_str!("input"));
         println!("Part 2: {}", result);
         assert_eq!(27526, result);
     }
@@ -136,7 +103,7 @@ mod tests {
     fn bench_part1(b: &mut Bencher) {
         let input = test::black_box(include_str!("input"));
         b.iter(|| {
-            let result = part1(input).unwrap();
+            let result = part1(input);
             assert_eq!(378, result);
         });
     }
@@ -145,7 +112,7 @@ mod tests {
     fn bench_part2(b: &mut Bencher) {
         let input = test::black_box(include_str!("input"));
         b.iter(|| {
-            let result = part2(input).unwrap();
+            let result = part2(input);
             assert_eq!(27526, result);
         });
     }
