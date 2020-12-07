@@ -44,7 +44,7 @@ fn part2(inp: &str) -> usize {
     unreachable!();
 }
 
-#[inline]
+#[inline(always)]
 fn parse_input(inp: &str) -> GraphMap<&str, usize, Directed> {
     GraphMap::<&str, usize, Directed>::from_edges(inp.lines().flat_map(|line| {
         // Remove dot at end of line
@@ -66,6 +66,7 @@ fn parse_input(inp: &str) -> GraphMap<&str, usize, Directed> {
     }))
 }
 
+#[inline(always)]
 fn parse_name<'a>(mut inp: &'a str) -> (&'a str, usize) {
     if inp.ends_with('s') {
         inp = &inp[..inp.len() - 1];
