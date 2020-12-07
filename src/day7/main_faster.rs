@@ -32,7 +32,7 @@ fn part2(inp: &str) -> Result<usize, ()> {
 
     while !done.is_empty() {
         let next = done.remove(done.len() - 1);
-        for &(k,v) in input_rev.get(next).unwrap_or(&Vec::new()) {
+        for &(k, v) in input_rev.get(next).unwrap_or(&Vec::new()) {
             left.insert(k, *left.get(k).unwrap() - 1);
             //If this thing is now done
             if *left.get(k).unwrap() == 0 {
@@ -97,8 +97,9 @@ fn parse_name<'a>(mut inp: &'a str) -> (&'a str, usize) {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test::Bencher;
+
+    use super::*;
 
     #[test]
     fn test_part1_ex1() {

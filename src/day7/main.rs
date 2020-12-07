@@ -1,8 +1,9 @@
 extern crate test;
 
-use petgraph::prelude::*;
 use std::collections::HashMap;
-use petgraph::visit::{Reversed, IntoNeighbors};
+
+use petgraph::prelude::*;
+use petgraph::visit::{IntoNeighbors, Reversed};
 
 fn part1(inp: &str) -> usize {
     //Parse input into graph
@@ -18,7 +19,7 @@ fn part1(inp: &str) -> usize {
     }
 
     //Substract 1, since we don't count the shiny gold bag itself
-    return count - 1
+    return count - 1;
 }
 
 fn part2(inp: &str) -> usize {
@@ -38,7 +39,7 @@ fn part2(inp: &str) -> usize {
         contains_in.insert(node, weight);
 
         //Stop if we found the shiny gold bag
-        if node == "shiny gold bag" {return weight;}
+        if node == "shiny gold bag" { return weight; }
     }
     unreachable!();
 }
