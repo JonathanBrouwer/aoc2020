@@ -7,7 +7,7 @@ fn part1(inp: &str) -> usize {
     input.sort_unstable();
     input.push(input.last().unwrap() + 3);
 
-    //Calcualte the differences
+    //Calculate the differences
     let diffs: Vec<_> = input.windows(2).map(|win| win[1]-win[0]).collect();
     //Count times which 1 and 3 occurs
     let count_1 = diffs.iter().filter(|&&x| x == 1).count();
@@ -36,24 +36,25 @@ fn part2(inp: &str) -> usize {
 
 #[inline]
 fn parse_input(inp: &str) -> Vec<usize> {
-    inp.lines().map(|x|x.parse().unwrap()).collect()
+    inp.lines().map(|x| x.parse().unwrap()).collect()
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test::Bencher;
+
+    use super::*;
 
     #[test]
     fn test_part1_ex1() {
         let result = part1(include_str!("example1"));
-        assert_eq!(5*7, result);
+        assert_eq!(5 * 7, result);
     }
 
     #[test]
     fn test_part1_ex2() {
         let result = part1(include_str!("example2"));
-        assert_eq!(22*10, result);
+        assert_eq!(22 * 10, result);
     }
 
     #[test]
