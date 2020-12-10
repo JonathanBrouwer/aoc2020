@@ -21,17 +21,25 @@ fn part2(inp: &str) -> usize {
     let mut input = parse_input(inp);
     input.sort_unstable();
 
-    //We fold the input
-    //Acc contains the previous values which are still relevant (still less than 3 from cur)
-    input.iter().fold(vec![(0, 1)], |mut prev, &cur| {
-        //Remove all previous values which are no longer relevant
-        while prev.first().unwrap().0 + 3 < cur {
-            prev.remove(0);
-        }
-        //New value can be reached by all still relevant previous values summed
-        prev.push((cur, prev.iter().map(|&(_num, count)| count).sum()));
-        prev
-    }).last().unwrap().1
+    //Prealloc memory for to store intermediates
+    let mut mem = Vec::with_capacity(input.len() + 1);
+    mem.push((0, 1usize));
+
+    //For each input
+    for num in input {
+        //Get the last 3 items
+        let sum = mem.iter().rev()
+            .take(3)
+            //Take only the ones which have a difference of at most 3
+            .take_while(|&&(c, _)| c + 3 >= num)
+            //Sum their values
+            .map(|&(_, s)| s).sum();
+        //Add to mem
+        mem.push((num, sum));
+    }
+
+    //Take last sum
+    mem.last().unwrap().1
 }
 
 #[inline]

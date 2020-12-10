@@ -1,5 +1,7 @@
 extern crate test;
 
+use itertools::Itertools;
+
 fn part1(inp: &str) -> usize {
     let mut input = parse_input(inp);
     //We add 0 and max+3 to the input, and sort it
@@ -37,6 +39,8 @@ fn part2(inp: &str) -> usize {
         //Add to mem
         mem.push((num, sum));
     }
+
+    //Take last sum
     mem.last().unwrap().1
 }
 
