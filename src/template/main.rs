@@ -1,14 +1,14 @@
-fn part1(inp: &str) -> Result<i64, ()> {
+fn part1(inp: &str) -> usize {
     let input = parse_input(inp);
 
-    return Ok(0);
+    return 0;
     // return Err(())
 }
 
-fn part2(inp: &str) -> Result<i64, ()> {
+fn part2(inp: &str) -> usize {
     let input = parse_input(inp);
 
-    return Ok(0);
+    return 0;
     // return Err(())
 }
 
@@ -20,26 +20,26 @@ mod tests {
 
     #[test]
     fn test_part1_ex1() {
-        let result = part1(include_str!("example")).unwrap();
+        let result = part1(include_str!("example"));
         assert_eq!(0, result);
     }
 
     #[test]
     fn test_part1_real() {
-        let result = part1(include_str!("input")).unwrap();
+        let result = part1(include_str!("input"));
         println!("Part 1: {}", result);
         assert_eq!(0, result);
     }
 
     #[test]
     fn test_part2_ex1() {
-        let result = part2(include_str!("example")).unwrap();
+        let result = part2(include_str!("example"));
         assert_eq!(0, result);
     }
 
     #[test]
     fn test_part2_real() {
-        let result = part2(include_str!("input")).unwrap();
+        let result = part2(include_str!("input"));
         println!("Part 2: {}", result);
         assert_eq!(0, result);
     }
