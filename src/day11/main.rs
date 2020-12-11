@@ -3,7 +3,6 @@ extern crate strum;
 extern crate strum_macros;
 extern crate bitvec;
 
-use itertools::iproduct;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use std::mem::swap;
@@ -42,6 +41,7 @@ fn solve_generic(inp: &str, calc_neighbours: fn((usize, usize), &(usize, usize),
         for &pos in &seat_positions {
             //Match on old state and the amount of neighbours, return new state
             let nb_count = neighbours[pos].iter().filter(|&&p| old_seat_bitmap[p]).count();
+
             seat_bitmap[pos] = match (old_seat_bitmap[pos], nb_count) {
                 (false, 0) => true,
                 (false, _) => false,
