@@ -8,7 +8,7 @@ edition = "2018"
 opt-level = 3
 lto = true
 
-[profile.dev]
+[profile.test]
 opt-level = 0
 lto = false
 debug = true
@@ -23,3 +23,4 @@ petgraph = "0.5.1"
 itertools = "0.9.0"
 strum = "0.20.0"
 strum_macros = "0.20"
+bitvec = "0.19.4"

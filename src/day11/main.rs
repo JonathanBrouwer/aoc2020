@@ -1,35 +1,38 @@
 extern crate test;
 extern crate strum;
 extern crate strum_macros;
+extern crate bitvec;
 
-use crate::day11::main::Seat::{Floor, SeatEmpty, SeatFull};
 use itertools::iproduct;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use std::mem::swap;
-use crate::day11::vec2d::Vec2D;
 
 fn part1(inp: &str) -> usize {
-    solve_generic(inp, Vec2D::calc_neighbours_p1, 4)
+    solve_generic(inp, calc_neighbours_p1, 4)
 }
 
 fn part2(inp: &str) -> usize {
-    solve_generic(inp, Vec2D::calc_neighbours_p2, 5)
+    solve_generic(inp, calc_neighbours_p2, 5)
 }
 
 #[inline]
-fn solve_generic(inp: &str, calc_neighbours: fn(&Vec2D<Seat>, (usize, usize), (usize, usize)) -> Vec<usize>, seatfull_swap_min: usize) -> usize {
-    let mut state = parse_input(inp);
-    let mut old_state = state.clone();
+fn solve_generic(inp: &str, calc_neighbours: fn((usize, usize), &(usize, usize), &Vec<bool>) -> Vec<usize>, seatfull_swap_min: usize) -> usize {
+    let dim = (inp.lines().count(), inp.lines().next().unwrap().len());
 
-    //Calc neighbours for each state
-    let mut neighbours = Vec2D::<Vec<usize>> { vec: vec![Vec::new(); state.dim.0 * state.dim.1], dim: state.dim.clone()}; //;
-    for (i, j) in iproduct!(0..state.dim.0, 0..state.dim.1) {
-        neighbours[(i, j)] = calc_neighbours(&state, (i, j), state.dim.clone());
-    }
+    //Keep track of bitmaps for each state
+    let mut seat_bitmap: Vec<_> = inp.chars().filter(|&c| c != '\n').map(|c| c == 'L').collect();
+    let mut old_seat_bitmap = seat_bitmap.clone();
 
     //Calc seat positions
-    let seat_positions: Vec<_> = (0..(state.dim.0*state.dim.1)).filter(|&pos| state[pos] != Floor).collect();
+    let seat_positions: Vec<_> = seat_bitmap.iter().enumerate().filter(|&(_, v)| *v).map(|(i, _)| i).collect();
+
+    //Calc neighbours for each state
+    let neighbours: Vec<_> = seat_bitmap.iter().enumerate().map(|(i, &p)| {
+        if !p { return Vec::new(); }
+        let pos = (i / dim.1, i % dim.1);
+        calc_neighbours(pos, &dim, &seat_bitmap)
+    }).collect();
 
     loop {
         //Keep track of old state and changed
@@ -37,95 +40,71 @@ fn solve_generic(inp: &str, calc_neighbours: fn(&Vec2D<Seat>, (usize, usize), (u
 
         //For each position
         for &pos in &seat_positions {
-
             //Match on old state and the amount of neighbours, return new state
-            state[pos] = match (old_state[pos], old_state.count_neighbours(&neighbours[pos])) {
-                (Floor, _) => unreachable!(),
-                (SeatEmpty, 0) => SeatFull,
-                (SeatEmpty, _) => SeatEmpty,
-                (SeatFull, v) if (seatfull_swap_min..=8).contains(&v)  => SeatEmpty,
-                (SeatFull, _) => SeatFull,
+            let nb_count = neighbours[pos].iter().filter(|&&p| old_seat_bitmap[p]).count();
+            seat_bitmap[pos] = match (old_seat_bitmap[pos], nb_count) {
+                (false, 0) => true,
+                (false, _) => false,
+                (true, v) if (seatfull_swap_min..).contains(&v) => false,
+                (true, _) => true,
             };
             //Store if state changed
-            changed |= state[pos] != old_state[pos];
+            changed |= seat_bitmap[pos] ^ old_seat_bitmap[pos];
         }
 
         //If nothing changed, break
         if !changed { break; }
 
         //Swap
-        swap(&mut state, &mut old_state)
+        swap(&mut seat_bitmap, &mut old_seat_bitmap)
     }
 
     //Count amount of full seats
-    return state.vec.iter().filter(|&&s| s == SeatFull).count();
+    return seat_positions.iter().filter(|&&pos| seat_bitmap[pos]).count();
 }
 
 #[inline]
-fn parse_input(inp: &str) -> Vec2D<Seat> {
-    let dim = (inp.lines().count(), inp.lines().next().unwrap().len());
-    let vec = inp.chars().filter(|&c| c != '\n').map(|c| match c {
-        '.' => Floor,
-        'L' => SeatFull,
-        _ => unreachable!()
-    }).collect();
-    return Vec2D { vec, dim }
+fn calc_neighbours_p1(pos: (usize, usize), dim: &(usize, usize), seatlocs: &Vec<bool>) -> Vec<usize> {
+    //Count amount of directions for which there is a seat with a person on it
+    Direction::iter().map(|dir: Direction| {
+        //Find the position in this direction
+        dir.apply_to(pos.0, pos.1, dim.0, dim.1, 1)
+            //Take only positions that are a seat
+            .filter(|&(ni, nj)| seatlocs[ni * dim.1 + nj])
+            //Map to 1d
+            .map(|pos| pos.0 * dim.1 + pos.1)
+    }).flatten().collect()
 }
 
-impl Vec2D<Seat> {
-    #[inline]
-    fn calc_neighbours_p1(&self, pos: (usize, usize), dim: (usize, usize)) -> Vec<usize> {
-        //Count amount of directions for which there is a seat with a person on it
-        Direction::iter().map(|dir: Direction| {
-            //Find the position in this direction
-            dir.apply_to(pos.0, pos.1, self.dim.0, self.dim.1, 1)
-                //Take only positions that are a seat
-                .filter(|&(ni, nj)| self[(ni,nj)] != Floor)
-                //Map to 1d
-                .map(|pos| pos.0 * dim.1 + pos.1)
-        }).flatten().collect()
-    }
-
-    #[inline]
-    fn calc_neighbours_p2(&self, pos: (usize, usize), dim: (usize, usize)) -> Vec<usize> {
-        //Count amount of directions for which there is a seat with a person on it
-        Direction::iter().map(|dir: Direction| {
-            //Iterate over each factor
-            (1..)
-                //Map each factor to a position (i, j)
-                .map(|f| dir.apply_to(pos.0, pos.1, self.dim.0, self.dim.1, f))
-                //Take all the positions that are valid
-                .take_while(|opt| opt.is_some()).map(|opt| opt.unwrap())
-                //Take only positions that are a seat
-                .filter(|&(ni, nj)| self[(ni,nj)] != Floor)
-                //Map to 1d
-                .map(|pos| pos.0 * dim.1 + pos.1)
-                //Take the first seat that is found
-                .next()
-        }).flatten().collect()
-    }
-
-    #[inline]
-    fn count_neighbours(&self, nbs: &Vec<usize>) -> usize {
+#[inline]
+fn calc_neighbours_p2(pos: (usize, usize), dim: &(usize, usize), seatlocs: &Vec<bool>) -> Vec<usize> {
+    //Count amount of directions for which there is a seat with a person on it
+    Direction::iter().map(|dir: Direction| {
         //Iterate over each factor
-        nbs.iter()
-            //Check if there's anyone on the seat
-            .filter(|&&pos| self[pos] == SeatFull)
-            //Count amount of seats
-            .count()
-    }
-}
-
-#[derive(Eq, PartialEq, Copy, Clone)]
-enum Seat {
-    Floor,
-    SeatEmpty,
-    SeatFull,
+        (1..)
+            //Map each factor to a position (i, j)
+            .map(|f| dir.apply_to(pos.0, pos.1, dim.0, dim.1, f))
+            //Take all the positions that are valid
+            .take_while(|opt| opt.is_some()).map(|opt| opt.unwrap())
+            //Take only positions that are a seat
+            .filter(|&(ni, nj)| seatlocs[ni * dim.1 + nj])
+            //Map to 1d
+            .map(|pos| pos.0 * dim.1 + pos.1)
+            //Take the first seat that is found
+            .next()
+    }).flatten().collect()
 }
 
 #[derive(EnumIter, Eq, PartialEq, Copy, Clone)]
 enum Direction {
-    MinMin, MinCen, MinMax, CenMin, CenMax, MaxMin, MaxCen, MaxMax
+    MinMin,
+    MinCen,
+    MinMax,
+    CenMin,
+    CenMax,
+    MaxMin,
+    MaxCen,
+    MaxMax,
 }
 
 impl Direction {
@@ -148,11 +127,12 @@ impl Direction {
     #[inline]
     fn apply_to(&self, i: usize, j: usize, leni: usize, lenj: usize, count: usize) -> Option<(usize, usize)> {
         let mut dir = self.get();
-        dir.0 *= count as isize; dir.1 *= count as isize;
+        dir.0 *= count as isize;
+        dir.1 *= count as isize;
 
         let (ni, nj) = (i as isize + dir.0, j as isize + dir.1);
-        if !(0..leni as isize).contains(&ni) { return None }
-        if !(0..lenj as isize).contains(&nj) { return None }
+        if !(0..leni as isize).contains(&ni) { return None; }
+        if !(0..lenj as isize).contains(&nj) { return None; }
         Some((ni as usize, nj as usize))
     }
 }
@@ -204,6 +184,3 @@ pub(crate) mod tests {
         });
     }
 }
-
-
-
