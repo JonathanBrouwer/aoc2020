@@ -11,16 +11,22 @@ use rayon::prelude::ParallelBridge;
 
 fn part1(inp: &str) -> usize {
     let mut state = Map { vec: parse_input(inp) };
-    let mut old_state = state.clone();
+
+    //Calc neighbours for each state
+    let mut neighbours = vec![vec![Vec::new(); state.vec[0].len()]; state.vec.len()];
+    for (i, j) in iproduct!(0..state.vec.len(), 0..state.vec[0].len()) {
+        neighbours[i][j] = state.calc_neighbours_p1(i, j);
+    }
 
     loop {
-        // Keep track of whether the state changed
+        //Keep track of old state and changed
+        let old_state = state.clone();
         let mut changed = false;
 
         //For each position (i, j)
         for (i, j) in iproduct!(0..state.vec.len(), 0..state.vec[0].len()) {
             //Match on old state and the amount of neighbours, return new state
-            state.vec[i][j] = match (old_state.vec[i][j], old_state.count_neighbours_p1(i, j)) {
+            state.vec[i][j] = match (old_state.vec[i][j], old_state.count_neighbours(&neighbours[i][j])) {
                 (Floor, _) => Floor,
                 (SeatEmpty, 0) => SeatFull,
                 (SeatEmpty, _) => SeatEmpty,
@@ -33,16 +39,20 @@ fn part1(inp: &str) -> usize {
 
         //If nothing changed, break
         if !changed { break; }
-
-        swap(&mut state, &mut old_state)
     }
 
     //Count amount of full seats
     return state.vec.iter().flatten().filter(|&&s| s == SeatFull).count();
 }
 
-pub(crate) fn part2(inp: &str) -> usize {
+fn part2(inp: &str) -> usize {
     let mut state = Map { vec: parse_input(inp) };
+
+    //Calc neighbours for each state
+    let mut neighbours = vec![vec![Vec::new(); state.vec[0].len()]; state.vec.len()];
+    for (i, j) in iproduct!(0..state.vec.len(), 0..state.vec[0].len()) {
+        neighbours[i][j] = state.calc_neighbours_p2(i, j);
+    }
 
     loop {
         //Keep track of old state and changed
@@ -52,7 +62,7 @@ pub(crate) fn part2(inp: &str) -> usize {
         //For each position (i, j)
         for (i, j) in iproduct!(0..state.vec.len(), 0..state.vec[0].len()) {
             //Match on old state and the amount of neighbours, return new state
-            state.vec[i][j] = match (old_state.vec[i][j], old_state.count_neighbours_p2(i, j)) {
+            state.vec[i][j] = match (old_state.vec[i][j], old_state.count_neighbours(&neighbours[i][j])) {
                 (Floor, _) => Floor,
                 (SeatEmpty, 0) => SeatFull,
                 (SeatEmpty, _) => SeatEmpty,
@@ -99,9 +109,19 @@ impl Map {
         }).count()
     }
 
-    fn count_neighbours_p2(&self, i: usize, j: usize) -> usize {
+    fn calc_neighbours_p1(&self, i: usize, j: usize) -> Vec<(usize, usize)> {
         //Count amount of directions for which there is a seat with a person on it
-        Direction::iter().filter(|dir: &Direction| {
+        Direction::iter().map(|dir: Direction| {
+            //Find the position in this direction
+            dir.apply_to(i, j, self.vec.len(), self.vec[0].len(), 1)
+                //Take only positions that are a seat
+                .filter(|&(ni, nj)| self.vec[ni][nj] != Floor)
+        }).flatten().collect()
+    }
+
+    fn calc_neighbours_p2(&self, i: usize, j: usize) -> Vec<(usize, usize)> {
+        //Count amount of directions for which there is a seat with a person on it
+        Direction::iter().map(|dir: Direction| {
             //Iterate over each factor
             (1..)
                 //Map each factor to a position (i, j)
@@ -110,11 +130,18 @@ impl Map {
                 .take_while(|opt| opt.is_some()).map(|opt| opt.unwrap())
                 //Take only positions that are a seat
                 .filter(|&(ni, nj)| self.vec[ni][nj] != Floor)
-                //Check if there's anyone on the seat
-                .map(|(ni, nj)| self.vec[ni][nj] == SeatFull)
                 //Take the first seat that is found
-                .next().unwrap_or(false)
-        }).count()
+                .next()
+        }).flatten().collect()
+    }
+
+    fn count_neighbours(&self, nbs: &Vec<(usize, usize)>) -> usize {
+        //Iterate over each factor
+        nbs.iter()
+            //Check if there's anyone on the seat
+            .filter(|&&(ni, nj)| self.vec[ni][nj] == SeatFull)
+            //Count amount of seats
+            .count()
     }
 }
 
