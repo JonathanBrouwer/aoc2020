@@ -7,7 +7,7 @@ use itertools::iproduct;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use std::mem::swap;
-use std::ops::{Index, IndexMut};
+use crate::day11::vec2d::Vec2D;
 
 fn part1(inp: &str) -> usize {
     solve_generic(inp, Vec2D::calc_neighbours_p1, 4)
@@ -18,28 +18,28 @@ fn part2(inp: &str) -> usize {
 }
 
 #[inline]
-fn solve_generic(inp: &str, calc_neighbours: fn(&Vec2D<Seat>, usize, usize) -> Vec<(usize, usize)>, seatfull_swap_min: usize) -> usize {
+fn solve_generic(inp: &str, calc_neighbours: fn(&Vec2D<Seat>, (usize, usize), (usize, usize)) -> Vec<usize>, seatfull_swap_min: usize) -> usize {
     let mut state = parse_input(inp);
     let mut old_state = state.clone();
 
     //Calc neighbours for each state
-    let mut neighbours = Vec2D::<Vec<(usize, usize)>> { vec: vec![Vec::new(); state.dim.0 * state.dim.1], dim: state.dim.clone()}; //;
+    let mut neighbours = Vec2D::<Vec<usize>> { vec: vec![Vec::new(); state.dim.0 * state.dim.1], dim: state.dim.clone()}; //;
     for (i, j) in iproduct!(0..state.dim.0, 0..state.dim.1) {
-        neighbours[(i, j)] = calc_neighbours(&state, i, j);
+        neighbours[(i, j)] = calc_neighbours(&state, (i, j), state.dim.clone());
     }
 
     //Calc seat positions
-    let seat_positions: Vec<_> = iproduct!(0..state.dim.0, 0..state.dim.1).filter(|&(i, j)| state[(i, j)] != Floor).collect();
+    let seat_positions: Vec<_> = (0..(state.dim.0*state.dim.1)).filter(|&pos| state[pos] != Floor).collect();
 
     loop {
         //Keep track of old state and changed
         let mut changed = false;
 
-        //For each position (i, j)
-        for &(i, j) in &seat_positions {
+        //For each position
+        for &pos in &seat_positions {
 
             //Match on old state and the amount of neighbours, return new state
-            state[(i, j)] = match (old_state[(i, j)], old_state.count_neighbours(&neighbours[(i, j)])) {
+            state[pos] = match (old_state[pos], old_state.count_neighbours(&neighbours[pos])) {
                 (Floor, _) => unreachable!(),
                 (SeatEmpty, 0) => SeatFull,
                 (SeatEmpty, _) => SeatEmpty,
@@ -47,7 +47,7 @@ fn solve_generic(inp: &str, calc_neighbours: fn(&Vec2D<Seat>, usize, usize) -> V
                 (SeatFull, _) => SeatFull,
             };
             //Store if state changed
-            changed |= state[(i, j)] != old_state[(i, j)];
+            changed |= state[pos] != old_state[pos];
         }
 
         //If nothing changed, break
@@ -72,64 +72,45 @@ fn parse_input(inp: &str) -> Vec2D<Seat> {
     return Vec2D { vec, dim }
 }
 
-#[derive(Clone)]
-struct Vec2D<T> {
-    vec: Vec<T>,
-    dim: (usize, usize)
-}
-
-impl<T> Index<(usize, usize)> for Vec2D<T> {
-    type Output = T;
-
-    #[inline]
-    fn index(&self, index: (usize, usize)) -> &Self::Output {
-        &self.vec[index.0*self.dim.1+index.1]
-    }
-}
-
-impl<T> IndexMut<(usize, usize)> for Vec2D<T> {
-
-    #[inline]
-    fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
-        &mut self.vec[index.0*self.dim.1+index.1]
-    }
-}
-
 impl Vec2D<Seat> {
     #[inline]
-    fn calc_neighbours_p1(&self, i: usize, j: usize) -> Vec<(usize, usize)> {
+    fn calc_neighbours_p1(&self, pos: (usize, usize), dim: (usize, usize)) -> Vec<usize> {
         //Count amount of directions for which there is a seat with a person on it
         Direction::iter().map(|dir: Direction| {
             //Find the position in this direction
-            dir.apply_to(i, j, self.dim.0, self.dim.1, 1)
+            dir.apply_to(pos.0, pos.1, self.dim.0, self.dim.1, 1)
                 //Take only positions that are a seat
                 .filter(|&(ni, nj)| self[(ni,nj)] != Floor)
+                //Map to 1d
+                .map(|pos| pos.0 * dim.1 + pos.1)
         }).flatten().collect()
     }
 
     #[inline]
-    fn calc_neighbours_p2(&self, i: usize, j: usize) -> Vec<(usize, usize)> {
+    fn calc_neighbours_p2(&self, pos: (usize, usize), dim: (usize, usize)) -> Vec<usize> {
         //Count amount of directions for which there is a seat with a person on it
         Direction::iter().map(|dir: Direction| {
             //Iterate over each factor
             (1..)
                 //Map each factor to a position (i, j)
-                .map(|f| dir.apply_to(i, j, self.dim.0, self.dim.1, f))
+                .map(|f| dir.apply_to(pos.0, pos.1, self.dim.0, self.dim.1, f))
                 //Take all the positions that are valid
                 .take_while(|opt| opt.is_some()).map(|opt| opt.unwrap())
                 //Take only positions that are a seat
                 .filter(|&(ni, nj)| self[(ni,nj)] != Floor)
+                //Map to 1d
+                .map(|pos| pos.0 * dim.1 + pos.1)
                 //Take the first seat that is found
                 .next()
         }).flatten().collect()
     }
 
     #[inline]
-    fn count_neighbours(&self, nbs: &Vec<(usize, usize)>) -> usize {
+    fn count_neighbours(&self, nbs: &Vec<usize>) -> usize {
         //Iterate over each factor
         nbs.iter()
             //Check if there's anyone on the seat
-            .filter(|&&(ni, nj)| self[(ni,nj)] == SeatFull)
+            .filter(|&&pos| self[pos] == SeatFull)
             //Count amount of seats
             .count()
     }
