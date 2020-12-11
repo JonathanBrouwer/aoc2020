@@ -8,114 +8,132 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use std::mem::swap;
 use rayon::prelude::ParallelBridge;
+use std::ops::{Index, IndexMut};
 
 fn part1(inp: &str) -> usize {
-    let mut state = Map { vec: parse_input(inp) };
+    let mut state = parse_input(inp);
+    let mut old_state = state.clone();
 
     //Calc neighbours for each state
-    let mut neighbours = vec![vec![Vec::new(); state.vec[0].len()]; state.vec.len()];
-    for (i, j) in iproduct!(0..state.vec.len(), 0..state.vec[0].len()) {
-        neighbours[i][j] = state.calc_neighbours_p1(i, j);
+    let mut neighbours = Vec2D::<Vec<(usize, usize)>> { vec: vec![Vec::new(); state.dim.0 * state.dim.1], dim: state.dim.clone()}; //;
+    for (i, j) in iproduct!(0..state.dim.0, 0..state.dim.1) {
+        neighbours[(i, j)] = state.calc_neighbours_p1(i, j);
     }
+
+    //Calc seat positions
+    let seat_positions: Vec<_> = iproduct!(0..state.dim.0, 0..state.dim.1).filter(|&(i, j)| state[(i, j)] != Floor).collect();
 
     loop {
         //Keep track of old state and changed
-        let old_state = state.clone();
         let mut changed = false;
 
         //For each position (i, j)
-        for (i, j) in iproduct!(0..state.vec.len(), 0..state.vec[0].len()) {
+        for &(i, j) in &seat_positions {
+
             //Match on old state and the amount of neighbours, return new state
-            state.vec[i][j] = match (old_state.vec[i][j], old_state.count_neighbours(&neighbours[i][j])) {
-                (Floor, _) => Floor,
+            state[(i, j)] = match (old_state[(i, j)], old_state.count_neighbours(&neighbours[(i, j)])) {
+                (Floor, _) => unreachable!(),
                 (SeatEmpty, 0) => SeatFull,
                 (SeatEmpty, _) => SeatEmpty,
                 (SeatFull, 4..=8) => SeatEmpty,
                 (SeatFull, _) => SeatFull,
             };
             //Store if state changed
-            changed |= state.vec[i][j] != old_state.vec[i][j];
+            changed |= state[(i, j)] != old_state[(i, j)];
         }
 
         //If nothing changed, break
         if !changed { break; }
+
+        //Swap
+        swap(&mut state, &mut old_state)
     }
 
     //Count amount of full seats
-    return state.vec.iter().flatten().filter(|&&s| s == SeatFull).count();
+    return state.vec.iter().filter(|&&s| s == SeatFull).count();
 }
 
 fn part2(inp: &str) -> usize {
-    let mut state = Map { vec: parse_input(inp) };
+    let mut state = parse_input(inp);
+    let mut old_state = state.clone();
 
     //Calc neighbours for each state
-    let mut neighbours = vec![vec![Vec::new(); state.vec[0].len()]; state.vec.len()];
-    for (i, j) in iproduct!(0..state.vec.len(), 0..state.vec[0].len()) {
-        neighbours[i][j] = state.calc_neighbours_p2(i, j);
+    let mut neighbours = Vec2D::<Vec<(usize, usize)>> { vec: vec![Vec::new(); state.dim.0 * state.dim.1], dim: state.dim.clone()}; //;
+    for (i, j) in iproduct!(0..state.dim.0, 0..state.dim.1) {
+        neighbours[(i, j)] = state.calc_neighbours_p2(i, j);
     }
+
+    //Calc seat positions
+    let seat_positions: Vec<_> = iproduct!(0..state.dim.0, 0..state.dim.1).filter(|&(i, j)| state[(i, j)] != Floor).collect();
 
     loop {
         //Keep track of old state and changed
-        let old_state = state.clone();
         let mut changed = false;
 
         //For each position (i, j)
-        for (i, j) in iproduct!(0..state.vec.len(), 0..state.vec[0].len()) {
+        for &(i, j) in &seat_positions {
+
             //Match on old state and the amount of neighbours, return new state
-            state.vec[i][j] = match (old_state.vec[i][j], old_state.count_neighbours(&neighbours[i][j])) {
-                (Floor, _) => Floor,
+            state[(i, j)] = match (old_state[(i, j)], old_state.count_neighbours(&neighbours[(i, j)])) {
+                (Floor, _) => unreachable!(),
                 (SeatEmpty, 0) => SeatFull,
                 (SeatEmpty, _) => SeatEmpty,
                 (SeatFull, 5..=8) => SeatEmpty,
                 (SeatFull, _) => SeatFull,
             };
             //Store if state changed
-            changed |= state.vec[i][j] != old_state.vec[i][j];
+            changed |= state[(i, j)] != old_state[(i, j)];
         }
 
         //If nothing changed, break
         if !changed { break; }
+
+        //Swap
+        swap(&mut state, &mut old_state)
     }
 
     //Count amount of full seats
-    return state.vec.iter().flatten().filter(|&&s| s == SeatFull).count();
+    return state.vec.iter().filter(|&&s| s == SeatFull).count();
 }
 
-fn parse_input(inp: &str) -> Vec<Vec<Seat>> {
-    inp.lines().map(|line| {
-        line.chars().map(|c| match c {
-            '.' => Floor,
-            'L' => SeatEmpty,
-            _ => unreachable!()
-        }).collect()
-    }).collect()
+fn parse_input(inp: &str) -> Vec2D<Seat> {
+    let dim = (inp.lines().count(), inp.lines().next().unwrap().len());
+    let vec = inp.chars().filter(|&c| c != '\n').map(|c| match c {
+        '.' => Floor,
+        'L' => SeatEmpty,
+        _ => unreachable!()
+    }).collect();
+    return Vec2D { vec, dim }
 }
 
 #[derive(Clone)]
-struct Map {
-    vec: Vec<Vec<Seat>>
+struct Vec2D<T> {
+    vec: Vec<T>,
+    dim: (usize, usize)
 }
 
-impl Map {
-    fn count_neighbours_p1(&self, i: usize, j: usize) -> usize {
-        //Count amount of directions for which there is a seat with a person on it
-        Direction::iter().filter(|dir: &Direction| {
-            //Find the position in this direction
-            dir.apply_to(i, j, self.vec.len(), self.vec[0].len(), 1)
-                //Check if there's anyone on the seat
-                .map(|(ni, nj)| self.vec[ni][nj] == SeatFull)
-                //If there was no seat, return false
-                .unwrap_or(false)
-        }).count()
-    }
+impl<T> Index<(usize, usize)> for Vec2D<T> {
+    type Output = T;
 
+    fn index(&self, index: (usize, usize)) -> &Self::Output {
+        &self.vec[index.0*self.dim.1+index.1]
+    }
+}
+
+impl<T> IndexMut<(usize, usize)> for Vec2D<T> {
+    fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
+        &mut self.vec[index.0*self.dim.1+index.1]
+    }
+}
+
+impl Vec2D<Seat> {
     fn calc_neighbours_p1(&self, i: usize, j: usize) -> Vec<(usize, usize)> {
         //Count amount of directions for which there is a seat with a person on it
         Direction::iter().map(|dir: Direction| {
             //Find the position in this direction
-            dir.apply_to(i, j, self.vec.len(), self.vec[0].len(), 1)
+            dir.apply_to(i, j, self.dim.0, self.dim.1, 1)
                 //Take only positions that are a seat
-                .filter(|&(ni, nj)| self.vec[ni][nj] != Floor)
+                .filter(|&(ni, nj)| self[(ni,nj)] != Floor)
         }).flatten().collect()
     }
 
@@ -125,11 +143,11 @@ impl Map {
             //Iterate over each factor
             (1..)
                 //Map each factor to a position (i, j)
-                .map(|f| dir.apply_to(i, j, self.vec.len(), self.vec[0].len(), f))
+                .map(|f| dir.apply_to(i, j, self.dim.0, self.dim.1, f))
                 //Take all the positions that are valid
                 .take_while(|opt| opt.is_some()).map(|opt| opt.unwrap())
                 //Take only positions that are a seat
-                .filter(|&(ni, nj)| self.vec[ni][nj] != Floor)
+                .filter(|&(ni, nj)| self[(ni,nj)] != Floor)
                 //Take the first seat that is found
                 .next()
         }).flatten().collect()
@@ -139,7 +157,7 @@ impl Map {
         //Iterate over each factor
         nbs.iter()
             //Check if there's anyone on the seat
-            .filter(|&&(ni, nj)| self.vec[ni][nj] == SeatFull)
+            .filter(|&&(ni, nj)| self[(ni,nj)] == SeatFull)
             //Count amount of seats
             .count()
     }
