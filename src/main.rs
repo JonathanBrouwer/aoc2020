@@ -1,8 +1,11 @@
 #![feature(test)]
 #![feature(iterator_fold_self)]
 #![feature(str_split_once)]
+#![feature(exclusive_range_pattern)]
 extern crate lazy_static;
 extern crate scan_fmt;
+#[macro_use]
+extern crate strum_macros;
 
 mod template;
 mod day1;
