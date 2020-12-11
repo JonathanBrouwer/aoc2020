@@ -7,60 +7,25 @@ use itertools::iproduct;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use std::mem::swap;
-use rayon::prelude::ParallelBridge;
 use std::ops::{Index, IndexMut};
 
 fn part1(inp: &str) -> usize {
-    let mut state = parse_input(inp);
-    let mut old_state = state.clone();
-
-    //Calc neighbours for each state
-    let mut neighbours = Vec2D::<Vec<(usize, usize)>> { vec: vec![Vec::new(); state.dim.0 * state.dim.1], dim: state.dim.clone()}; //;
-    for (i, j) in iproduct!(0..state.dim.0, 0..state.dim.1) {
-        neighbours[(i, j)] = state.calc_neighbours_p1(i, j);
-    }
-
-    //Calc seat positions
-    let seat_positions: Vec<_> = iproduct!(0..state.dim.0, 0..state.dim.1).filter(|&(i, j)| state[(i, j)] != Floor).collect();
-
-    loop {
-        //Keep track of old state and changed
-        let mut changed = false;
-
-        //For each position (i, j)
-        for &(i, j) in &seat_positions {
-
-            //Match on old state and the amount of neighbours, return new state
-            state[(i, j)] = match (old_state[(i, j)], old_state.count_neighbours(&neighbours[(i, j)])) {
-                (Floor, _) => unreachable!(),
-                (SeatEmpty, 0) => SeatFull,
-                (SeatEmpty, _) => SeatEmpty,
-                (SeatFull, 4..=8) => SeatEmpty,
-                (SeatFull, _) => SeatFull,
-            };
-            //Store if state changed
-            changed |= state[(i, j)] != old_state[(i, j)];
-        }
-
-        //If nothing changed, break
-        if !changed { break; }
-
-        //Swap
-        swap(&mut state, &mut old_state)
-    }
-
-    //Count amount of full seats
-    return state.vec.iter().filter(|&&s| s == SeatFull).count();
+    solve_generic(inp, Vec2D::calc_neighbours_p1, 4)
 }
 
 fn part2(inp: &str) -> usize {
+    solve_generic(inp, Vec2D::calc_neighbours_p2, 5)
+}
+
+#[inline]
+fn solve_generic(inp: &str, calc_neighbours: fn(&Vec2D<Seat>, usize, usize) -> Vec<(usize, usize)>, seatfull_swap_min: usize) -> usize {
     let mut state = parse_input(inp);
     let mut old_state = state.clone();
 
     //Calc neighbours for each state
     let mut neighbours = Vec2D::<Vec<(usize, usize)>> { vec: vec![Vec::new(); state.dim.0 * state.dim.1], dim: state.dim.clone()}; //;
     for (i, j) in iproduct!(0..state.dim.0, 0..state.dim.1) {
-        neighbours[(i, j)] = state.calc_neighbours_p2(i, j);
+        neighbours[(i, j)] = calc_neighbours(&state, i, j);
     }
 
     //Calc seat positions
@@ -78,7 +43,7 @@ fn part2(inp: &str) -> usize {
                 (Floor, _) => unreachable!(),
                 (SeatEmpty, 0) => SeatFull,
                 (SeatEmpty, _) => SeatEmpty,
-                (SeatFull, 5..=8) => SeatEmpty,
+                (SeatFull, v) if (seatfull_swap_min..=8).contains(&v)  => SeatEmpty,
                 (SeatFull, _) => SeatFull,
             };
             //Store if state changed
@@ -96,11 +61,12 @@ fn part2(inp: &str) -> usize {
     return state.vec.iter().filter(|&&s| s == SeatFull).count();
 }
 
+#[inline]
 fn parse_input(inp: &str) -> Vec2D<Seat> {
     let dim = (inp.lines().count(), inp.lines().next().unwrap().len());
     let vec = inp.chars().filter(|&c| c != '\n').map(|c| match c {
         '.' => Floor,
-        'L' => SeatEmpty,
+        'L' => SeatFull,
         _ => unreachable!()
     }).collect();
     return Vec2D { vec, dim }
@@ -115,18 +81,22 @@ struct Vec2D<T> {
 impl<T> Index<(usize, usize)> for Vec2D<T> {
     type Output = T;
 
+    #[inline]
     fn index(&self, index: (usize, usize)) -> &Self::Output {
         &self.vec[index.0*self.dim.1+index.1]
     }
 }
 
 impl<T> IndexMut<(usize, usize)> for Vec2D<T> {
+
+    #[inline]
     fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
         &mut self.vec[index.0*self.dim.1+index.1]
     }
 }
 
 impl Vec2D<Seat> {
+    #[inline]
     fn calc_neighbours_p1(&self, i: usize, j: usize) -> Vec<(usize, usize)> {
         //Count amount of directions for which there is a seat with a person on it
         Direction::iter().map(|dir: Direction| {
@@ -137,6 +107,7 @@ impl Vec2D<Seat> {
         }).flatten().collect()
     }
 
+    #[inline]
     fn calc_neighbours_p2(&self, i: usize, j: usize) -> Vec<(usize, usize)> {
         //Count amount of directions for which there is a seat with a person on it
         Direction::iter().map(|dir: Direction| {
@@ -153,6 +124,7 @@ impl Vec2D<Seat> {
         }).flatten().collect()
     }
 
+    #[inline]
     fn count_neighbours(&self, nbs: &Vec<(usize, usize)>) -> usize {
         //Iterate over each factor
         nbs.iter()
@@ -176,6 +148,8 @@ enum Direction {
 }
 
 impl Direction {
+    /// Map each direction to (int, int) vector
+    #[inline]
     fn get(&self) -> (isize, isize) {
         match self {
             Direction::MinMin => (-1, -1),
@@ -189,6 +163,8 @@ impl Direction {
         }
     }
 
+    /// Move (i, j) to this direction count times.
+    #[inline]
     fn apply_to(&self, i: usize, j: usize, leni: usize, lenj: usize, count: usize) -> Option<(usize, usize)> {
         let mut dir = self.get();
         dir.0 *= count as isize; dir.1 *= count as isize;
@@ -235,8 +211,7 @@ pub(crate) mod tests {
     fn bench_part1(b: &mut Bencher) {
         let input = test::black_box(include_str!("input"));
         b.iter(|| {
-            let result = part1(input);
-            assert_eq!(2275, result);
+            part1(input)
         });
     }
 
@@ -244,8 +219,7 @@ pub(crate) mod tests {
     fn bench_part2(b: &mut Bencher) {
         let input = test::black_box(include_str!("input"));
         b.iter(|| {
-            let result = part2(input);
-            assert_eq!(2121, result);
+            part2(input)
         });
     }
 }
