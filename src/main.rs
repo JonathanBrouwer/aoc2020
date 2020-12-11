@@ -2,7 +2,6 @@
 #![feature(iterator_fold_self)]
 #![feature(str_split_once)]
 #![feature(exclusive_range_pattern)]
-#![feature(const_generics)]
 extern crate lazy_static;
 extern crate scan_fmt;
 #[macro_use]
