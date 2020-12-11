@@ -45,7 +45,7 @@ fn parse_input(inp: &str) -> Vec<usize> {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use test::Bencher;
 
@@ -56,7 +56,7 @@ mod tests {
     }
 
     #[test]
-    fn test_part1_real() {
+    pub(crate) fn test_part1_real() {
         let result = part1(include_str!("input"), 25);
         println!("Part 1: {}", result);
         assert_eq!(675280050, result);
@@ -69,7 +69,7 @@ mod tests {
     }
 
     #[test]
-    fn test_part2_real() {
+    pub(crate) fn test_part2_real() {
         let result = part2(include_str!("input"), 675280050);
         println!("Part 2: {}", result);
         assert_eq!(96081673, result);

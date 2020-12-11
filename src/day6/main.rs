@@ -30,7 +30,7 @@ fn solve<F>(inp: &str, mut foldfun: F) -> Result<u32, ()>
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use test::Bencher;
 
     use super::*;
@@ -42,7 +42,7 @@ mod tests {
     }
 
     #[test]
-    fn test_part1_real() {
+    pub(crate) fn test_part1_real() {
         let result = part1(include_str!("input")).unwrap();
         println!("Part 1: {}", result);
         assert_eq!(7110, result);
@@ -55,7 +55,7 @@ mod tests {
     }
 
     #[test]
-    fn test_part2_real() {
+    pub(crate) fn test_part2_real() {
         let result = part2(include_str!("input")).unwrap();
         println!("Part 2: {}", result);
         assert_eq!(3628, result);

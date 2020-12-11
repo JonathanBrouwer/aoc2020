@@ -2,7 +2,7 @@ extern crate typenum;
 
 use bit_array::BitArray;
 
-fn part1(inp: &str) -> Result<usize, ()> {
+pub(crate) fn part1(inp: &str) -> Result<usize, ()> {
     // Parse input
     let nums = parse_input(inp);
 
@@ -53,7 +53,7 @@ fn parse_input(inp: &str) -> Vec<usize> {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use std::time::SystemTime;
 
     use super::*;
@@ -65,7 +65,7 @@ mod tests {
     }
 
     #[test]
-    fn test_part1_real() {
+    pub(crate) fn test_part1_real() {
         let result = part1(include_str!("input")).unwrap();
         println!("Part 1: {}", result);
         assert_eq!(898299, result);
@@ -78,7 +78,7 @@ mod tests {
     }
 
     #[test]
-    fn test_part2_real() {
+    pub(crate) fn test_part2_real() {
         let result = part2(include_str!("input")).unwrap();
         println!("Part 2: {}", result);
         assert_eq!(143933922, result);

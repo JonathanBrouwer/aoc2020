@@ -7,6 +7,7 @@ use itertools::iproduct;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use std::mem::swap;
+use rayon::prelude::ParallelBridge;
 
 fn part1(inp: &str) -> usize {
     let mut state = Map { vec: parse_input(inp) };
@@ -40,7 +41,7 @@ fn part1(inp: &str) -> usize {
     return state.vec.iter().flatten().filter(|&&s| s == SeatFull).count();
 }
 
-fn part2(inp: &str) -> usize {
+pub(crate) fn part2(inp: &str) -> usize {
     let mut state = Map { vec: parse_input(inp) };
 
     loop {
@@ -86,7 +87,6 @@ struct Map {
 }
 
 impl Map {
-    #[inline(always)]
     fn count_neighbours_p1(&self, i: usize, j: usize) -> usize {
         //Count amount of directions for which there is a seat with a person on it
         Direction::iter().filter(|dir: &Direction| {
@@ -99,7 +99,6 @@ impl Map {
         }).count()
     }
 
-    #[inline(always)]
     fn count_neighbours_p2(&self, i: usize, j: usize) -> usize {
         //Count amount of directions for which there is a seat with a person on it
         Direction::iter().filter(|dir: &Direction| {
@@ -132,7 +131,6 @@ enum Direction {
 }
 
 impl Direction {
-    #[inline(always)]
     fn get(&self) -> (isize, isize) {
         match self {
             Direction::MinMin => (-1, -1),
@@ -146,7 +144,6 @@ impl Direction {
         }
     }
 
-    #[inline(always)]
     fn apply_to(&self, i: usize, j: usize, leni: usize, lenj: usize, count: usize) -> Option<(usize, usize)> {
         let mut dir = self.get();
         dir.0 *= count as isize; dir.1 *= count as isize;
@@ -159,7 +156,7 @@ impl Direction {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use test::Bencher;
 
@@ -170,7 +167,7 @@ mod tests {
     }
 
     #[test]
-    fn test_part1_real() {
+    pub(crate) fn test_part1_real() {
         let result = part1(include_str!("input"));
         println!("Part 1: {}", result);
         assert_eq!(2275, result);
@@ -183,7 +180,7 @@ mod tests {
     }
 
     #[test]
-    fn test_part2_real() {
+    pub(crate) fn test_part2_real() {
         let result = part2(include_str!("input"));
         println!("Part 2: {}", result);
         assert_eq!(2121, result);
