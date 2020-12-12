@@ -76,7 +76,7 @@ fn part1_simd(inp: &str) -> usize {
     for start in ((width+1)..=(state.len()-width-VEC_LENGTH-1)).step_by(VEC_LENGTH) {
         unsafe {
             let vec = u8x64::from_slice_unaligned_unchecked(&state[start..]);
-            let occ = (vec & u8x64::splat(0x0f)).ne(u8x64::splat(0));
+            let occ = (vec & u8x64::splat(0x0f)).eq(u8x64::splat(1));
             count += occ.bitmask().count_ones();
         }
     }
