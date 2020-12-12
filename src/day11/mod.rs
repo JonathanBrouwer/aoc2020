@@ -1,2 +1,2 @@
 pub mod main;
-mod main_part1_simd;
+pub mod main_part1_simd;

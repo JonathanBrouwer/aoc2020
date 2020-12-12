@@ -24,10 +24,10 @@ fn part1(inp: &str) -> usize {
 
 fn part2(inp: &str) -> usize {
     //Parse input into graph
-    let mut graph = parse_input(inp);
+    let graph = parse_input(inp);
 
     //Toposort the graph
-    let mut tps: Vec<&str> = petgraph::algo::toposort(&graph, None).unwrap();
+    let tps: Vec<&str> = petgraph::algo::toposort(&graph, None).unwrap();
 
     //Walk over toposort
     let mut contains_in = HashMap::<&str, usize>::new();

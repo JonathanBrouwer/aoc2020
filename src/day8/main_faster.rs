@@ -1,10 +1,8 @@
 extern crate test;
 
 use bit_array::BitArray;
-use petgraph::{Graph, Directed};
 
 use crate::day8::main_faster::Instruction::{ACC, JMP, NOP};
-use petgraph::graphmap::GraphMap;
 
 fn part1(inp: &str) -> isize {
     let mut computer = Computer::from_input(inp);

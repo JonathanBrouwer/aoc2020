@@ -3,7 +3,7 @@ extern crate test;
 use std::collections::{HashMap, HashSet};
 
 fn part1(inp: &str) -> Result<usize, ()> {
-    let (input, input_rev) = parse_input(inp);
+    let (_input, input_rev) = parse_input(inp);
 
     let mut found = HashSet::new();
     let mut found_to_continue = Vec::new();
@@ -32,7 +32,7 @@ fn part2(inp: &str) -> Result<usize, ()> {
 
     while !done.is_empty() {
         let next = done.remove(done.len() - 1);
-        for &(k, v) in input_rev.get(next).unwrap_or(&Vec::new()) {
+        for &(k, _v) in input_rev.get(next).unwrap_or(&Vec::new()) {
             left.insert(k, *left.get(k).unwrap() - 1);
             //If this thing is now done
             if *left.get(k).unwrap() == 0 {

@@ -4,7 +4,6 @@
 #![feature(exclusive_range_pattern)]
 extern crate lazy_static;
 extern crate scan_fmt;
-#[macro_use]
 extern crate strum_macros;
 extern crate test;
 
@@ -54,7 +53,7 @@ mod tests {
             day9::main::tests::test_part2_real();
             day10::main::tests::test_part1_real();
             day10::main::tests::test_part2_real();
-            day11::main::tests::test_part1_real();
+            day11::main_part1_simd::tests::test_part1_simd_real();
             day11::main::tests::test_part2_real();
         });
     }

@@ -6,38 +6,35 @@ extern crate packed_simd_2;
 
 use std::mem::swap;
 use packed_simd_2::*;
-use arrayvec::ArrayVec;
 
 fn part1_simd(inp: &str) -> usize {
     let dim = (inp.lines().count(), inp.lines().next().unwrap().len());
     let width = dim.1 + 1;
+    const VEC_LENGTH: usize = 64;
 
     // -- PARSE INPUT --
-    let mut state = ArrayVec::<[u8; 128 * 128]>::new();
-    for _ in 0..width { state.push(16) } //Buffer
-    for line in inp.lines() {
-        //Buffer, to make sure first element of a row is not next to last element of previous row
-        state.push(16);
-        for char in line.chars() {
-            if char == '.' {
-                state.push(16);
-            } else {
-                state.push(1);
-            }
+    let mut state = Vec::<u8>::new();
+    for _ in 0..width+1 { state.push(16) } //Buffer
+    for char in inp.bytes() {
+        match char {
+            //Represent each chair as a 1
+            b'L' => state.push(1),
+            //A floor tile is 16
+            //Each newline is a buffer, to make sure first element of a row is not next to last element of previous row
+            _ => state.push(16),
         }
     }
-    for _ in 0..width { state.push(16) } //Buffer
-    for _ in 0..64 { state.push(16) } //Buffer
+    for _ in 0..width+VEC_LENGTH { state.push(16) } //Buffer
 
     // -- INIT COUNT --
-    let mut state_new = ArrayVec::<[u8; 128 * 128]>::new();
+    let mut state_new = Vec::<u8>::new();
     for _ in 0..state.len() {
         state_new.push(0);
     }
 
     loop {
         let mut changed = false;
-        for start in ((width+1)..=(state.len()-width-64-1)).step_by(64) {
+        for start in ((width+1)..=(state.len()-width-VEC_LENGTH-1)).step_by(VEC_LENGTH) {
             unsafe {
                 //Calculate new count in lower 4 bits
                 let mut count = u8x64::splat(0);
@@ -76,15 +73,13 @@ fn part1_simd(inp: &str) -> usize {
     }
 
     let mut count = 0;
-    for start in ((width+1)..=(state.len()-width-64-1)).step_by(64) {
+    for start in ((width+1)..=(state.len()-width-VEC_LENGTH-1)).step_by(VEC_LENGTH) {
         unsafe {
             let vec = u8x64::from_slice_unaligned_unchecked(&state[start..]);
             let occ = (vec & u8x64::splat(0x0f)).ne(u8x64::splat(0));
             count += occ.bitmask().count_ones();
         }
     }
-
-
 
     count as usize
 }
@@ -116,7 +111,7 @@ pub(crate) mod tests {
     fn bench_part1_simd(b: &mut Bencher) {
         let input = test::black_box(include_str!("input"));
         b.iter(|| {
-            part1_simd(input)
+            assert_eq!(2275, part1_simd(input))
         });
     }
 }

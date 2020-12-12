@@ -54,8 +54,6 @@ fn parse_input(inp: &str) -> Vec<usize> {
 
 #[cfg(test)]
 pub(crate) mod tests {
-    use std::time::SystemTime;
-
     use super::*;
 
     #[test]
