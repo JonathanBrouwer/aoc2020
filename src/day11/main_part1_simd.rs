@@ -26,7 +26,8 @@ fn part1_simd(inp: &str) -> usize {
         }
         state.push(16); //Buffer
     }
-    for _ in 0..width { state.push(16) }
+    for _ in 0..width { state.push(16) } //Buffer
+    for _ in 0..64 { state.push(16) } //Buffer
 
     // -- INIT COUNT --
     let mut state_new = ArrayVec::<[u8; 128 * 128]>::new();
@@ -34,25 +35,22 @@ fn part1_simd(inp: &str) -> usize {
 
     loop {
         let mut changed = false;
-        for row in 1..dim.0 + 1 {
-            for side in 0..2 {
-                //Calculate where this entry starts
-                let start = if side == 0 { row * width + 1 } else { row * width + width - 65 };
-
+        for start in ((width+1)..=(state.len()-width-64-1)).step_by(64) {
+            unsafe {
                 //Calculate new count in lower 4 bits
                 let mut count = u8x64::splat(0);
-                count += u8x64::from_slice_unaligned(&state[start - width - 1..]);
-                count += u8x64::from_slice_unaligned(&state[start - width..]);
-                count += u8x64::from_slice_unaligned(&state[start - width + 1..]);
-                count += u8x64::from_slice_unaligned(&state[start - 1..]);
-                count += u8x64::from_slice_unaligned(&state[start + 1..]);
-                count += u8x64::from_slice_unaligned(&state[start + width - 1..]);
-                count += u8x64::from_slice_unaligned(&state[start + width..]);
-                count += u8x64::from_slice_unaligned(&state[start + width + 1..]);
+                count += u8x64::from_slice_unaligned_unchecked(&state[start - width - 1..]);
+                count += u8x64::from_slice_unaligned_unchecked(&state[start - width..]);
+                count += u8x64::from_slice_unaligned_unchecked(&state[start - width + 1..]);
+                count += u8x64::from_slice_unaligned_unchecked(&state[start - 1..]);
+                count += u8x64::from_slice_unaligned_unchecked(&state[start + 1..]);
+                count += u8x64::from_slice_unaligned_unchecked(&state[start + width - 1..]);
+                count += u8x64::from_slice_unaligned_unchecked(&state[start + width..]);
+                count += u8x64::from_slice_unaligned_unchecked(&state[start + width + 1..]);
                 count &= u8x64::splat(0x0f);
 
                 //To calculate the new state, start with the old state
-                let old = u8x64::from_slice_unaligned(&state[start..]);
+                let old = u8x64::from_slice_unaligned_unchecked(&state[start..]);
                 let mut new = old;
 
                 //If count == 0, set seat to full (1), else keep old value
@@ -65,7 +63,7 @@ fn part1_simd(inp: &str) -> usize {
                 new = old.eq(u8x64::splat(16)).select(u8x64::splat(16), new);
 
                 //Write new value to new state
-                new.write_to_slice_unaligned(&mut state_new[start..]);
+                new.write_to_slice_unaligned_unchecked(&mut state_new[start..]);
                 //Check if anything changed
                 changed |= new.ne(old).any();
             }
@@ -76,11 +74,19 @@ fn part1_simd(inp: &str) -> usize {
     }
 
     let mut count = 0;
-    for row in 1..dim.0 + 1 {
-        let start = row*width+1;
-        count += state_new[start..start+dim.1].iter().filter(|&&x| x != 16 && x != 0).count();
+    for start in ((width+1)..=(state.len()-width-64-1)).step_by(64) {
+        unsafe {
+            let vec = u8x64::from_slice_unaligned_unchecked(&state[start..]);
+            let occ = (vec & u8x64::splat(0x0f)).ne(u8x64::splat(0));
+            count += occ.bitmask().count_ones();
+        }
     }
-    count
+    // for row in 1..dim.0 + 1 {
+    //     let start = row*width+1;
+    //     count += state_new[start..start+dim.1].iter().filter(|&&x| x != 16 && x != 0).count();
+    //     //occupied.bitmask().count_ones();
+    // }
+    count as usize
 }
 
 #[cfg(test)]
@@ -107,7 +113,7 @@ pub(crate) mod tests {
     }
 
     #[bench]
-    fn bench_part2(b: &mut Bencher) {
+    fn bench_part1_simd(b: &mut Bencher) {
         let input = test::black_box(include_str!("input"));
         b.iter(|| {
             part1_simd(input)
