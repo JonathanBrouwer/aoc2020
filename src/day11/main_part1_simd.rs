@@ -10,13 +10,14 @@ use arrayvec::ArrayVec;
 
 fn part1_simd(inp: &str) -> usize {
     let dim = (inp.lines().count(), inp.lines().next().unwrap().len());
-    let width = dim.1 + 2;
+    let width = dim.1 + 1;
 
     // -- PARSE INPUT --
     let mut state = ArrayVec::<[u8; 128 * 128]>::new();
     for _ in 0..width { state.push(16) } //Buffer
     for line in inp.lines() {
-        state.push(16); //Buffer
+        //Buffer, to make sure first element of a row is not next to last element of previous row
+        state.push(16);
         for char in line.chars() {
             if char == '.' {
                 state.push(16);
@@ -24,14 +25,15 @@ fn part1_simd(inp: &str) -> usize {
                 state.push(1);
             }
         }
-        state.push(16); //Buffer
     }
     for _ in 0..width { state.push(16) } //Buffer
     for _ in 0..64 { state.push(16) } //Buffer
 
     // -- INIT COUNT --
     let mut state_new = ArrayVec::<[u8; 128 * 128]>::new();
-    unsafe { state_new.set_len(state.len()) };
+    for _ in 0..state.len() {
+        state_new.push(0);
+    }
 
     loop {
         let mut changed = false;
@@ -81,11 +83,9 @@ fn part1_simd(inp: &str) -> usize {
             count += occ.bitmask().count_ones();
         }
     }
-    // for row in 1..dim.0 + 1 {
-    //     let start = row*width+1;
-    //     count += state_new[start..start+dim.1].iter().filter(|&&x| x != 16 && x != 0).count();
-    //     //occupied.bitmask().count_ones();
-    // }
+
+
+
     count as usize
 }
 
