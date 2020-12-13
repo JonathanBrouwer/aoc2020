@@ -27,13 +27,9 @@ fn part2(inp: &str) -> usize {
         .map(|(tdif, &busid)| {
             //t + tdif = 0 % busid
             //t = -tdif % busid
-            (modulo(0 - tdif as i64, busid as i64), busid as i64)
+            ((0 - tdif as i64).rem_euclid(busid as i64), busid as i64)
         }).collect::<Vec<_>>();
     chinese_remainder(&chinese_input[..]).unwrap() as usize
-}
-
-fn modulo(a: i64, b: i64) -> i64 {
-    ((a % b) + b) % b
 }
 
 //TY rosettacode
@@ -71,6 +67,7 @@ fn chinese_remainder(inputs: &[(i64, i64)] /* (res, mod) */) -> Option<i64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::Bencher;
 
     #[test]
     fn test_part1_ex1() {
