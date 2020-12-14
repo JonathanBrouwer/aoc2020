@@ -35,21 +35,26 @@ fn part2(inp: &str) -> usize {
         match instr {
             SET_MASK(new_mask) => mask = new_mask,
             WRITE(index, val) => {
-                mask.iter()
+                let mut address = mask.iter()
                     .zip(to_bitmap(index).iter())
-                    .fold(vec![0usize], |vec, (mbit, vbit)| {
+                    .fold(0usize, |num, (mbit, vbit)| {
                         match (mbit, vbit) {
-                            (BIT(false), &vbit) => vec.iter().map(|&a| (a<<1)+(vbit as usize)).collect(),
-                            (BIT(true), _) => vec.iter().map(|&a| (a<<1)+1).collect(),
-                            (DONT_CARE, _) => {
-                                vec.iter().flat_map(|&a| {
-                                    vec![(a<<1)+0, (a<<1)+1]
-                                }).map(|a| a).collect()
-                            }
+                            (BIT(false), &vbit) => (num << 1) + (vbit as usize),
+                            (BIT(true), _) => (num << 1) + (1 as usize),
+                            (DONT_CARE, _) => (num << 1) + (0 as usize),
                         }
-                    }).iter().for_each(|&a| {
-                    hmap.insert(a, val);
-                });
+                    });
+                let x_indices: Vec<_> = mask.iter().enumerate().filter(|&(i, &v)| v == DONT_CARE).map(|(i, _)| (36-i-1)).collect();
+                for x_values in 0..1<<x_indices.len() {
+                    for (i, &index) in x_indices.iter().enumerate() {
+                        if x_values & (1 << i) != 0 {
+                            address |= 1 << index;
+                        }else{
+                            address &= !(1 << index);
+                        }
+                    }
+                    hmap.insert(address, val);
+                }
             }
         }
     }
@@ -88,7 +93,7 @@ fn to_bitmap(val: usize) -> [bool; 36] {
     bitmap
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 enum BitMaskBit {
     BIT(bool),
     DONT_CARE,
@@ -103,6 +108,7 @@ enum Instruction {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::Bencher;
 
     #[test]
     fn test_part1_ex1() {
@@ -128,6 +134,22 @@ mod tests {
         let result = part2(include_str!("input"));
         println!("Part 2: {}", result);
         assert_eq!(3705162613854, result);
+    }
+
+    #[bench]
+    fn bench_part1(b: &mut Bencher) {
+        let input = test::black_box(include_str!("input"));
+        b.iter(|| {
+            part1(input)
+        });
+    }
+
+    #[bench]
+    fn bench_part2(b: &mut Bencher) {
+        let input = test::black_box(include_str!("input"));
+        b.iter(|| {
+            part2(input)
+        });
     }
 }
 
