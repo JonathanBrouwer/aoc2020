@@ -150,7 +150,7 @@ mod tests {
     fn test_part2_real() {
         let result = part2(include_str!("input"));
         println!("Part 2: {}", result);
-        assert_eq!(0, result);
+        assert_eq!(54404, result);
     }
 }
 
