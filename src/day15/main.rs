@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 fn part1(inp: &str) -> usize {
     brute_force(inp, 2020)
 }
@@ -11,27 +9,22 @@ fn part2(inp: &str) -> usize {
 fn brute_force(inp: &str, to: usize) -> usize {
     let input = parse_input(inp);
 
-    // let mut map = [0; 40000000];
-    let mut map = HashMap::new();
+    let mut map = vec![0u32; to];
     let mut i = 1;
     for &num in &input {
-        map.insert(num, i);
+        map[num] = i;
         i+=1;
     }
     //Last number that has been spoken
-    let mut last = *input.last().unwrap();
+    let mut last = *input.last().unwrap() as u32;
     //How many turns it was last spoken before, if any
-    let mut last_before = None;
-    loop {
-        last = last_before.unwrap_or(0);
-        last_before = map.get(&last).map(|&l| i-l);
-        map.insert(last, i);
-        if i == to {
-            println!("{}", map.values().max().unwrap());
-            return last;
-        }
-        i += 1;
+    let mut last_before = 0u32;
+    for i in i..=to as u32 {
+        last = last_before;
+        last_before = if map[last as usize] == 0 { 0 } else { i-map[last as usize] };
+        map[last as usize] = i;
     }
+    return last as usize;
 }
 
 fn parse_input(inp: &str) -> Vec<usize> {
@@ -41,6 +34,7 @@ fn parse_input(inp: &str) -> Vec<usize> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::Bencher;
 
     #[test]
     fn test_part1_ex1() {
@@ -76,5 +70,21 @@ mod tests {
         let result = part2(include_str!("input"));
         println!("Part 2: {}", result);
         assert_eq!(16671510, result);
+    }
+
+    #[bench]
+    fn bench_part1(b: &mut Bencher) {
+        let input = test::black_box(include_str!("input"));
+        b.iter(|| {
+            part1(input)
+        });
+    }
+
+    #[bench]
+    fn bench_part2(b: &mut Bencher) {
+        let input = test::black_box(include_str!("input"));
+        b.iter(|| {
+            part2(input)
+        });
     }
 }
