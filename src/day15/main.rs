@@ -1,3 +1,5 @@
+use std::mem;
+
 fn part1(inp: &str) -> usize {
     brute_force(inp, 2020)
 }
@@ -14,16 +16,12 @@ fn brute_force(inp: &str, to: usize) -> usize {
         map[num] = (i+1) as u32;
     }
     //Last number that has been spoken
-    let mut last = *input.last().unwrap() as u32;
-    //How many turns it was last spoken before, if any
-    let mut last_before = 0u32;
-    for i in (input.len()+1) as u32..=to as u32 {
+    let mut last = 0u32;
+    for i in (input.len()+1) as u32..to as u32 {
         //UNSAFE: The size of the map is `to`, and the function can't grow faster, so unchecked is safe
         unsafe {
-            last = last_before;
-            let map_last = *map.get_unchecked(last as usize);
-            last_before = if map_last != 0 { i - map_last } else { 0 };
-            *map.get_unchecked_mut(last as usize) = i;
+            let map_last = mem::replace(map.get_unchecked_mut(last as usize), i);
+            last = if map_last != 0 { i - map_last } else { 0 };
         }
     }
     return last as usize;
