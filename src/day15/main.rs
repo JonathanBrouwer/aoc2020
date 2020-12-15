@@ -10,19 +10,21 @@ fn brute_force(inp: &str, to: usize) -> usize {
     let input = parse_input(inp);
 
     let mut map = vec![0u32; to];
-    let mut i = 1;
-    for &num in &input {
-        map[num] = i;
-        i+=1;
+    for (i, &num) in input.iter().enumerate() {
+        map[num] = (i+1) as u32;
     }
     //Last number that has been spoken
     let mut last = *input.last().unwrap() as u32;
     //How many turns it was last spoken before, if any
     let mut last_before = 0u32;
-    for i in i..=to as u32 {
-        last = last_before;
-        last_before = if map[last as usize] == 0 { 0 } else { i-map[last as usize] };
-        map[last as usize] = i;
+    for i in (input.len()+1) as u32..=to as u32 {
+        //UNSAFE: The size of the map is `to`, and the function can't grow faster, so unchecked is safe
+        unsafe {
+            last = last_before;
+            let map_last = *map.get_unchecked(last as usize);
+            last_before = if map_last != 0 { i - map_last } else { 0 };
+            *map.get_unchecked_mut(last as usize) = i;
+        }
     }
     return last as usize;
 }
