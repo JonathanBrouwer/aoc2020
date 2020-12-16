@@ -9,7 +9,7 @@ opt-level = 3
 lto = true
 
 [profile.test]
-opt-level = 1
+opt-level = 0
 lto = false
 debug = true
 
@@ -25,3 +25,4 @@ strum = "0.20.0"
 strum_macros = "0.20"
 bitvec = "0.19.4"
 packed_simd_2 = "0.3.4"
+mcmf = "2.0.0"

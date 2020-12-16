@@ -17,6 +17,7 @@ dependencies = [
  "bitvec",
  "itertools",
  "lazy_static",
+ "mcmf",
  "packed_simd_2",
  "petgraph",
  "rayon",
@@ -144,6 +145,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ba62103ce691c2fd80fbae2213dfdda9ce60804973ac6b6e97de818ea7f52c8"
 
 [[package]]
+name = "gcc"
+version = "0.3.55"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f5f3913fa0bfe7ee1fd8248b6b9f42a5af4b9d65ec2dd2c3c26132b950ecfc2"
+
+[[package]]
 name = "generic-array"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -213,6 +220,15 @@ name = "libm"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7fc7aa29613bd6a620df431842069224d8bc9011086b1db4c0e0cd47fa03ec9a"
+
+[[package]]
+name = "mcmf"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8cb289e5187a41de06144d7dd0e1c11f07f047fb7406b507bb365e6a6c378d93"
+dependencies = [
+ "gcc",
+]
 
 [[package]]
 name = "memchr"
