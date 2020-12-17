@@ -2,6 +2,7 @@
 #![feature(iterator_fold_self)]
 #![feature(str_split_once)]
 #![feature(exclusive_range_pattern)]
+#![feature(or_patterns)]
 extern crate lazy_static;
 extern crate scan_fmt;
 extern crate strum_macros;
@@ -24,6 +25,7 @@ mod day13;
 mod day14;
 mod day15;
 mod day16;
+mod day17;
 mod infinl;
 
 
