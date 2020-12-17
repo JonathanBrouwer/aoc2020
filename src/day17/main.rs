@@ -18,11 +18,11 @@ fn part2(inp: &str) -> usize {
 ///Run the cellular automata in DIM dimensions, returning the number of active cells.
 fn solve<const DIM: usize>(inp: &str) -> usize {
     //Parse input
-    let mut state = GridMD::<DIM>::new();
+    let mut state = GridMD::<bool, DIM>::new(false);
     parse_input(inp, &mut state);
 
     //Run for 6 iterations, swapping the state grids each time
-    let mut new_state = GridMD::<DIM>::new();
+    let mut new_state = GridMD::<bool, DIM>::new(false);
     for _ in 0..6 {
         next(&state, &mut new_state);
         mem::swap(&mut state, &mut new_state)
@@ -32,7 +32,7 @@ fn solve<const DIM: usize>(inp: &str) -> usize {
     state.vec.iter().filter(|&&b| b).count()
 }
 
-fn next<const DIM: usize>(state: &GridMD<DIM>, new_state: &mut GridMD<DIM>) {
+fn next<const DIM: usize>(state: &GridMD<bool, DIM>, new_state: &mut GridMD<bool, DIM>) {
     //Loop through all cells in the MIN..=MAX hypercube (this doesn't loop through the edges, avoiding the need for bound checking)
     const MIN: isize = -(MAX_NEG as isize) + 1;
     const MAX: isize = MAX_POS as isize - 1;
@@ -65,7 +65,7 @@ fn next<const DIM: usize>(state: &GridMD<DIM>, new_state: &mut GridMD<DIM>) {
 }
 
 ///Parse the input to a DIM GridMD
-fn parse_input<const DIM: usize>(inp: &str, state: &mut GridMD<DIM>) -> () {
+fn parse_input<const DIM: usize>(inp: &str, state: &mut GridMD<bool, DIM>) -> () {
     inp.lines().enumerate().for_each(|(y, l)| {
         l.chars().enumerate().for_each(|(x, c)| {
             let mut arg = [0; DIM];
@@ -79,6 +79,7 @@ fn parse_input<const DIM: usize>(inp: &str, state: &mut GridMD<DIM>) -> () {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::Bencher;
 
     #[test]
     fn test_part1_ex1() {
@@ -104,6 +105,24 @@ mod tests {
         let result = part2(include_str!("input"));
         println!("Part 2: {}", result);
         assert_eq!(2084, result);
+    }
+
+    #[bench]
+    fn bench_part1(b: &mut Bencher) {
+        let input = test::black_box(include_str!("input"));
+        b.iter(|| {
+            let result = part1(input);
+            assert_eq!(289, result);
+        });
+    }
+
+    #[bench]
+    fn bench_part2(b: &mut Bencher) {
+        let input = test::black_box(include_str!("input"));
+        b.iter(|| {
+            let result = part2(input);
+            assert_eq!(2084, result);
+        });
     }
 }
 
