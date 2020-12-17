@@ -49,9 +49,7 @@ fn next<const DIM: usize>(state: &GridMD<u8, DIM>, new_state: &mut GridMD<u8, DI
             }
 
             //Add to count if active
-            if state[fcoord] == 1 {
-                count += 1;
-            }
+            count += state[fcoord];
         }
 
         //Calculate new state based on old state and count
