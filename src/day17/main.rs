@@ -5,8 +5,8 @@ use crate::day17::gridmd::GridMD;
 use crate::day17::gridmd_iterator::GridMDIterator;
 use packed_simd_2::*;
 
-pub const MAX_POS: usize = 18; //14
-pub const MAX_NEG: usize = 12;  //7
+pub const MAX_POS: usize = 15; //Should be: 8+6+1 = 15
+pub const MAX_NEG: usize = 7;  //Should be: 6+1 = 7
 
 fn debug_2d(inp: &str) -> usize { solve::<2>(inp) }
 
@@ -25,9 +25,13 @@ fn solve<const DIM: usize>(inp: &str) -> usize {
 
     //Run for 6 iterations, swapping the state grids each time
     let mut new_state = GridMD::<u8, DIM>::new(0);
+
+    state.print();
     for _ in 0..6 {
         next(&state, &mut new_state);
-        mem::swap(&mut state, &mut new_state)
+        mem::swap(&mut state, &mut new_state);
+        println!("------");
+        state.print();
     }
 
     //Count amount of active cells
@@ -36,11 +40,15 @@ fn solve<const DIM: usize>(inp: &str) -> usize {
 
 fn next<const DIM: usize>(state: &GridMD<u8, DIM>, state_new: &mut GridMD<u8, DIM>) {
     //Loop through all cells in the MIN..=MAX hypercube (this doesn't loop through the edges, avoiding the need for bound checking)
-    const MIN: isize = -(MAX_NEG as isize) + 1;
-    const MAX: isize = MAX_POS as isize - 1;
-    for coord in GridMDIterator::<DIM, MIN, MAX>::new() {
+    const MIN: isize = -(MAX_NEG as isize);
+    const MAX: isize = MAX_POS as isize;
+
+    let to_skip: usize = (0..DIM).map(|p| (MAX_NEG + 1 + MAX_POS).pow(p as u32)).sum();
+    for coord in GridMDIterator::<DIM, MIN, MAX>::new().skip(to_skip).step_by(64) {
+        // println!("-- Coord: {:?}", coord);
         //Loop through the -1..=1 hypercube and count all the active cells
-        let mut count = 0;
+        let mut count = u8x64::splat(0);
+        // let mut count = 0;
         for dcoord in GridMDIterator::<DIM, -1, 1>::new() {
             //Don't count the middle cell
             if dcoord == [0; DIM] { continue; }
@@ -52,15 +60,16 @@ fn next<const DIM: usize>(state: &GridMD<u8, DIM>, state_new: &mut GridMD<u8, DI
             }
 
             //Add to count if active
-            count += state[fcoord];
+            // println!("Fcoord: {:?}", fcoord);
+            count += u8x64::from_slice_unaligned(&state[fcoord..]);
         }
+        // print!("{:?} ", count);
 
         //Calculate new state based on old state and count
-        state_new[coord] = match (state[coord], count) {
-            (1, 2 | 3) => 1,
-            (0, 3) => 1,
-            _ => 0
-        };
+        let mut new = u8x64::from_slice_unaligned(&state[coord..]);
+        new = count.eq(u8x64::splat(2)).select(new, u8x64::splat(0));
+        new = count.eq(u8x64::splat(3)).select(u8x64::splat(1), new);
+        new.write_to_slice_unaligned(&mut state_new[coord..]);
     }
 }
 
@@ -86,9 +95,15 @@ mod tests {
     use test::Bencher;
 
     #[test]
-    fn test_yeet() {
-        let result = debug_2d(include_str!("example"));
+    fn test_square() {
+        let result = debug_2d(include_str!("example_square"));
+        assert_eq!(12, result)
+    }
 
+    #[test]
+    fn test_example_2d() {
+        let result = debug_2d(include_str!("example"));
+        assert_eq!(5, result)
     }
 
     #[test]

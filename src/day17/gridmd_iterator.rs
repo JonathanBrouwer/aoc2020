@@ -1,5 +1,5 @@
 pub struct GridMDIterator<const DIM: usize, const MIN: isize, const MAX: isize> {
-    last: [isize; DIM]
+    pub(crate) last: [isize; DIM]
 }
 
 impl<const DIM: usize, const MIN: isize, const MAX: isize> GridMDIterator<DIM, MIN, MAX> {

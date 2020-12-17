@@ -1,6 +1,8 @@
 use crate::day17::main::{MAX_POS, MAX_NEG};
 use std::ops::{Index, IndexMut, RangeFrom, Range};
 use std::slice::SliceIndex;
+use crate::day17::gridmd_iterator::GridMDIterator;
+use std::fmt::Debug;
 
 pub struct GridMD<T: Clone, const DIM: usize> {
     pub vec: Vec<T>
@@ -8,22 +10,33 @@ pub struct GridMD<T: Clone, const DIM: usize> {
 
 impl<T: Clone, const DIM: usize> GridMD<T, DIM> {
     pub(crate) fn new(default: T) -> Self {
-        let size = (MAX_POS + MAX_NEG + 1).pow(DIM as u32);
+        let size = (MAX_NEG + 1 + MAX_POS).pow(DIM as u32);
         let size_rounded_up = (size + 64 - 1) / 64 * 64;
         assert_eq!(size_rounded_up%64, 0);
-        GridMD { vec: vec![default; 64 + size_rounded_up + 64]}
+        GridMD { vec: vec![default; 64 + size_rounded_up + 100000]}
     }
 
     pub fn index_to_final(index: [isize; DIM]) -> usize {
         index.iter()
-            .map(|&i| (i + MAX_NEG as isize) as usize)
+            .map(|&i| i + MAX_NEG as isize)
             .enumerate()
-            .map(|(i, index)| (MAX_POS + MAX_NEG).pow((DIM-i-1) as u32) * index)
-            .sum::<usize>() + 64
+            .map(|(i, index)| (MAX_POS + 1 + MAX_NEG).pow((DIM-i-1) as u32) as isize * index)
+            .sum::<isize>() as usize + 64
     }
+}
 
+impl<T: Clone + Debug, const DIM: usize> GridMD<T, DIM> {
     pub fn print(&self) {
-        
+        if DIM == 2 {
+            for y in -(MAX_NEG as isize)..=MAX_POS as isize {
+                for x in -(MAX_NEG as isize)..=MAX_POS as isize {
+                    let mut index = [0; DIM];
+                    index[0] = x; index[1] = y;
+                    print!("{:?}", self[index]);
+                }
+                println!();
+            }
+        }
     }
 }
 
