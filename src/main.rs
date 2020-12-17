@@ -3,6 +3,7 @@
 #![feature(str_split_once)]
 #![feature(exclusive_range_pattern)]
 #![feature(or_patterns)]
+#![feature(const_generics)]
 extern crate lazy_static;
 extern crate scan_fmt;
 extern crate strum_macros;

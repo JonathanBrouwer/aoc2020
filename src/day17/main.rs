@@ -1,15 +1,23 @@
-use itertools::Itertools;
+use itertools::{Itertools, Product};
 use std::mem;
 use std::ops::{Index, IndexMut};
+use crate::day17::gridmd::GridMD;
 
-const max_pos: usize = 14;
-const max_neg: usize = 7;
+pub const MAX_POS: usize = 14;
+pub const MAX_NEG: usize = 7;
 
 fn part1(inp: &str) -> usize {
-    let mut state = Grid3D::new();
-    parse_input(inp, &mut state);
+    solve::<3>(inp)
+}
 
-    let mut new_state = Grid3D::new();
+fn part2(inp: &str) -> usize {
+    solve::<4>(inp)
+}
+
+fn solve<const DIM: usize>(inp: &str) -> usize {
+    let mut state = GridMD::<DIM>::new();
+    parse_input(inp, &mut state);
+    let mut new_state = GridMD::<DIM>::new();
     for _ in 0..6 {
         next(&state, &mut new_state);
         mem::swap(&mut state, &mut new_state)
@@ -17,75 +25,66 @@ fn part1(inp: &str) -> usize {
     state.vec.iter().filter(|&&b| b).count()
 }
 
-fn part2(inp: &str) -> usize {
-    // let input = parse_input(inp);
-
-    return 0;
-    // return Err(())
-}
-
-fn next(state: &Grid3D, new_state: &mut Grid3D) {
-    for ((x,y),z) in (-(max_neg as isize)+1..=max_pos as isize-1).cartesian_product(-(max_neg as isize)+1..=max_pos as isize-1).cartesian_product(-(max_neg as isize)+1..=max_pos as isize-1) {
+fn next<const DIM: usize>(state: &GridMD<DIM>, new_state: &mut GridMD<DIM>) {
+    const MIN: isize = -(MAX_NEG as isize) + 1;
+    const MAX: isize = MAX_POS as isize - 1;
+    for coord in GridMDIterator::<DIM, MIN, MAX>::new() {
         let mut count = 0;
-        for ((dx, dy), dz) in (-1isize..=1).cartesian_product(-1isize..=1).cartesian_product(-1isize..=1) {
-            if dx == 0 && dy == 0 && dz == 0 {continue}
-            if state[(x+dx, y+dy, z+dz)] {
+        for dcoord in GridMDIterator::<DIM, -1, 1>::new() {
+            if dcoord == [0; DIM] { continue; }
+            let mut fcoord: [isize; DIM] = [0; DIM];
+            for (i, (c, dc)) in coord.iter().zip(&dcoord).enumerate() {
+                fcoord[i] = c + dc;
+            }
+            if state[fcoord] {
                 count += 1;
             }
         }
-        new_state[(x,y,z)] = match (state[(x,y,z)], count) {
-            (true, 2|3) => true,
+        new_state[coord] = match (state[coord], count) {
+            (true, 2 | 3) => true,
             (false, 3) => true,
             _ => false
-        }
-
+        };
     }
 }
 
-fn parse_input(inp: &str, state: &mut Grid3D) -> () {
+struct GridMDIterator<const DIM: usize, const MIN: isize, const MAX: isize> {
+    last: [isize; DIM]
+}
+
+impl<const DIM: usize, const MIN: isize, const MAX: isize> GridMDIterator<DIM, MIN, MAX> {
+    fn new() -> Self {
+        let mut res = GridMDIterator { last: [MIN; DIM] };
+        res.last[DIM-1] = MIN-1;
+        res
+    }
+}
+
+impl<const DIM: usize, const MIN: isize, const MAX: isize> Iterator for GridMDIterator<DIM, MIN, MAX> {
+    type Item = [isize; DIM];
+
+    fn next(&mut self) -> Option<Self::Item> {
+        for i in (0..DIM).rev() {
+            if self.last[i] == MAX {
+                self.last[i] = MIN;
+            } else {
+                self.last[i] += 1;
+                return Some(self.last);
+            }
+        }
+        return None;
+    }
+}
+
+fn parse_input<const DIM: usize>(inp: &str, state: &mut GridMD<DIM>) -> () {
     inp.lines().enumerate().for_each(|(y, l)| {
         l.chars().enumerate().for_each(|(x, c)| {
-            state[(x as isize, y as isize, 0)] = c == '#'
+            let mut arg = [0; DIM];
+            arg[0] = x as isize;
+            arg[1] = y as isize;
+            state[arg] = c == '#'
         })
     })
-}
-
-struct Grid3D {
-    vec: Vec<bool>
-}
-
-impl Grid3D {
-    fn new() -> Self {
-        Grid3D { vec: vec![false; (max_pos + max_neg + 1).pow(3) ]}
-    }
-}
-
-impl Index<(isize, isize, isize)> for Grid3D {
-    type Output = bool;
-
-    #[inline]
-    fn index(&self, index: (isize, isize, isize)) -> &bool {
-        let index_abs = (
-            (index.0 + max_neg as isize) as usize,
-            (index.1 + max_neg as isize) as usize,
-            (index.2 + max_neg as isize) as usize
-            );
-        let final_index = index_abs.0*(max_pos+max_neg).pow(2) + index_abs.1*(max_pos+max_neg) + index_abs.2;
-        &self.vec[final_index]
-    }
-}
-
-impl IndexMut<(isize, isize, isize)> for Grid3D {
-    #[inline]
-    fn index_mut(&mut self, index: (isize, isize, isize)) -> &mut bool {
-        let index_abs = (
-            (index.0 + max_neg as isize) as usize,
-            (index.1 + max_neg as isize) as usize,
-            (index.2 + max_neg as isize) as usize
-        );
-        let final_index = index_abs.0*(max_pos+max_neg).pow(2) + index_abs.1*(max_pos+max_neg) + index_abs.2;
-        &mut self.vec[final_index]
-    }
 }
 
 #[cfg(test)]
@@ -115,7 +114,7 @@ mod tests {
     fn test_part2_real() {
         let result = part2(include_str!("input"));
         println!("Part 2: {}", result);
-        assert_eq!(0, result);
+        assert_eq!(2084, result);
     }
 }
 
