@@ -14,12 +14,16 @@ impl<T: Clone, const DIM: usize> GridMD<T, DIM> {
         GridMD { vec: vec![default; 64 + size_rounded_up + 64]}
     }
 
-    fn index_to_final(index: [isize; DIM]) -> usize {
+    pub fn index_to_final(index: [isize; DIM]) -> usize {
         index.iter()
             .map(|&i| (i + MAX_NEG as isize) as usize)
             .enumerate()
             .map(|(i, index)| (MAX_POS + MAX_NEG).pow((DIM-i-1) as u32) * index)
             .sum::<usize>() + 64
+    }
+
+    pub fn print(&self) {
+        
     }
 }
 
@@ -46,7 +50,15 @@ impl<T: Clone, const DIM: usize> IndexMut<[isize; DIM]> for GridMD<T, DIM> {
 impl<T: Clone, const DIM: usize> Index<RangeFrom<[isize; DIM]>> for GridMD<T, DIM> {
     type Output = [T];
 
+    #[inline]
     fn index(&self, index: RangeFrom<[isize; DIM]>) -> &Self::Output {
         &self.vec[GridMD::<T, DIM>::index_to_final(index.start)..]
+    }
+}
+
+impl<T: Clone, const DIM: usize> IndexMut<RangeFrom<[isize; DIM]>> for GridMD<T, DIM> {
+    #[inline]
+    fn index_mut(&mut self, index: RangeFrom<[isize; DIM]>) -> &mut [T] {
+        &mut self.vec[GridMD::<T, DIM>::index_to_final(index.start)..]
     }
 }

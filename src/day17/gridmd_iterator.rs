@@ -22,6 +22,6 @@ impl<const DIM: usize, const MIN: isize, const MAX: isize> Iterator for GridMDIt
                 return Some(self.last);
             }
         }
-        return None;
+        None
     }
 }

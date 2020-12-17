@@ -3,9 +3,12 @@ use std::mem;
 use std::ops::{Index, IndexMut};
 use crate::day17::gridmd::GridMD;
 use crate::day17::gridmd_iterator::GridMDIterator;
+use packed_simd_2::*;
 
-pub const MAX_POS: usize = 14;
-pub const MAX_NEG: usize = 7;
+pub const MAX_POS: usize = 18; //14
+pub const MAX_NEG: usize = 12;  //7
+
+fn debug_2d(inp: &str) -> usize { solve::<2>(inp) }
 
 fn part1(inp: &str) -> usize {
     solve::<3>(inp)
@@ -31,7 +34,7 @@ fn solve<const DIM: usize>(inp: &str) -> usize {
     state.vec.iter().filter(|&&b| b == 1).count()
 }
 
-fn next<const DIM: usize>(state: &GridMD<u8, DIM>, new_state: &mut GridMD<u8, DIM>) {
+fn next<const DIM: usize>(state: &GridMD<u8, DIM>, state_new: &mut GridMD<u8, DIM>) {
     //Loop through all cells in the MIN..=MAX hypercube (this doesn't loop through the edges, avoiding the need for bound checking)
     const MIN: isize = -(MAX_NEG as isize) + 1;
     const MAX: isize = MAX_POS as isize - 1;
@@ -53,7 +56,7 @@ fn next<const DIM: usize>(state: &GridMD<u8, DIM>, new_state: &mut GridMD<u8, DI
         }
 
         //Calculate new state based on old state and count
-        new_state[coord] = match (state[coord], count) {
+        state_new[coord] = match (state[coord], count) {
             (1, 2 | 3) => 1,
             (0, 3) => 1,
             _ => 0
@@ -81,6 +84,12 @@ fn parse_input<const DIM: usize>(inp: &str) -> GridMD<u8, DIM> {
 mod tests {
     use super::*;
     use test::Bencher;
+
+    #[test]
+    fn test_yeet() {
+        let result = debug_2d(include_str!("example"));
+
+    }
 
     #[test]
     fn test_part1_ex1() {
