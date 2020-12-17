@@ -11,7 +11,7 @@ impl<T: Clone, const DIM: usize> GridMD<T, DIM> {
         let size = (MAX_POS + MAX_NEG + 1).pow(DIM as u32);
         let size_rounded_up = (size + 64 - 1) / 64 * 64;
         assert_eq!(size_rounded_up%64, 0);
-        GridMD { vec: vec![default; size_rounded_up]}
+        GridMD { vec: vec![default; 64 + size_rounded_up + 64]}
     }
 
     fn index_to_final(index: [isize; DIM]) -> usize {
@@ -19,7 +19,7 @@ impl<T: Clone, const DIM: usize> GridMD<T, DIM> {
             .map(|&i| (i + MAX_NEG as isize) as usize)
             .enumerate()
             .map(|(i, index)| (MAX_POS + MAX_NEG).pow((DIM-i-1) as u32) * index)
-            .sum()
+            .sum::<usize>() + 64
     }
 }
 
