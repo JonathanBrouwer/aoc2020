@@ -18,21 +18,20 @@ fn part2(inp: &str) -> usize {
 ///Run the cellular automata in DIM dimensions, returning the number of active cells.
 fn solve<const DIM: usize>(inp: &str) -> usize {
     //Parse input
-    let mut state = GridMD::<bool, DIM>::new(false);
-    parse_input(inp, &mut state);
+    let mut state: GridMD<u8, DIM> = parse_input(inp);
 
     //Run for 6 iterations, swapping the state grids each time
-    let mut new_state = GridMD::<bool, DIM>::new(false);
+    let mut new_state = GridMD::<u8, DIM>::new(0);
     for _ in 0..6 {
         next(&state, &mut new_state);
         mem::swap(&mut state, &mut new_state)
     }
 
     //Count amount of active cells
-    state.vec.iter().filter(|&&b| b).count()
+    state.vec.iter().filter(|&&b| b == 1).count()
 }
 
-fn next<const DIM: usize>(state: &GridMD<bool, DIM>, new_state: &mut GridMD<bool, DIM>) {
+fn next<const DIM: usize>(state: &GridMD<u8, DIM>, new_state: &mut GridMD<u8, DIM>) {
     //Loop through all cells in the MIN..=MAX hypercube (this doesn't loop through the edges, avoiding the need for bound checking)
     const MIN: isize = -(MAX_NEG as isize) + 1;
     const MAX: isize = MAX_POS as isize - 1;
@@ -50,30 +49,34 @@ fn next<const DIM: usize>(state: &GridMD<bool, DIM>, new_state: &mut GridMD<bool
             }
 
             //Add to count if active
-            if state[fcoord] {
+            if state[fcoord] == 1 {
                 count += 1;
             }
         }
 
         //Calculate new state based on old state and count
         new_state[coord] = match (state[coord], count) {
-            (true, 2 | 3) => true,
-            (false, 3) => true,
-            _ => false
+            (1, 2 | 3) => 1,
+            (0, 3) => 1,
+            _ => 0
         };
     }
 }
 
 ///Parse the input to a DIM GridMD
-fn parse_input<const DIM: usize>(inp: &str, state: &mut GridMD<bool, DIM>) -> () {
+fn parse_input<const DIM: usize>(inp: &str) -> GridMD<u8, DIM> {
+    let mut state = GridMD::<u8, DIM>::new(0);
+
     inp.lines().enumerate().for_each(|(y, l)| {
         l.chars().enumerate().for_each(|(x, c)| {
             let mut arg = [0; DIM];
             arg[0] = x as isize;
             arg[1] = y as isize;
-            state[arg] = c == '#'
+            state[arg] = (c == '#') as u8
         })
-    })
+    });
+
+    state
 }
 
 #[cfg(test)]
