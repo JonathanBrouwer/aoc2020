@@ -30,7 +30,9 @@ mod day17;
 mod infinl;
 
 
-fn main() {}
+fn main() {
+    day17::main::part2(include_str!("day17/input"));
+}
 
 #[cfg(test)]
 mod tests {

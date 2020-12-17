@@ -1,8 +1,9 @@
-use crate::day17::main::{MAX_POS, MAX_NEG};
+use crate::day17::main::{MAX_POS, MAX_NEG, MIN, MAX};
 use std::ops::{Index, IndexMut, RangeFrom, Range};
 use std::slice::SliceIndex;
 use crate::day17::gridmd_iterator::GridMDIterator;
 use std::fmt::Debug;
+use itertools::__std_iter::Skip;
 
 pub struct GridMD<T: Clone, const DIM: usize> {
     pub vec: Vec<T>
@@ -16,12 +17,19 @@ impl<T: Clone, const DIM: usize> GridMD<T, DIM> {
         GridMD { vec: vec![default; 64 + size_rounded_up + 100000]}
     }
 
+    #[inline]
     pub fn index_to_final(index: [isize; DIM]) -> usize {
         index.iter()
             .map(|&i| i + MAX_NEG as isize)
             .enumerate()
             .map(|(i, index)| (MAX_POS + 1 + MAX_NEG).pow((DIM-i-1) as u32) as isize * index)
             .sum::<isize>() as usize + 64
+    }
+
+    #[inline]
+    pub fn iter_all(&self) -> Skip<GridMDIterator<DIM, MIN, MAX>> {
+        let to_skip: usize = (0..DIM).map(|p| (MAX_NEG + 1 + MAX_POS).pow(p as u32)).sum();
+        GridMDIterator::<DIM, MIN, MAX>::new().skip(to_skip)
     }
 }
 
