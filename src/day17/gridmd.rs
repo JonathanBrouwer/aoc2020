@@ -4,6 +4,7 @@ use std::slice::SliceIndex;
 use crate::day17::gridmd_iterator::GridMDIterator;
 use std::fmt::Debug;
 use itertools::__std_iter::Skip;
+use std::iter::Take;
 
 pub struct GridMD<T: Clone, const DIM: usize> {
     pub vec: Vec<T>
@@ -27,9 +28,10 @@ impl<T: Clone, const DIM: usize> GridMD<T, DIM> {
     }
 
     #[inline]
-    pub fn iter_all(&self) -> Skip<GridMDIterator<DIM, MIN, MAX>> {
+    pub fn iter_all(&self) -> Take<Skip<GridMDIterator<DIM, MIN, MAX>>> {
         let to_skip: usize = (0..DIM).map(|p| (MAX_NEG + 1 + MAX_POS).pow(p as u32)).sum();
-        GridMDIterator::<DIM, MIN, MAX>::new().skip(to_skip)
+        let total_len = (MAX_NEG + 1 + MAX_POS).pow(DIM as u32) - 2 * to_skip;
+        GridMDIterator::<DIM, MIN, MAX>::new().skip(to_skip).take(total_len)
     }
 }
 
