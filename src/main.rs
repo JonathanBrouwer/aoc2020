@@ -9,6 +9,10 @@ extern crate scan_fmt;
 extern crate strum_macros;
 extern crate test;
 
+extern crate pest;
+#[macro_use]
+extern crate pest_derive;
+
 mod template;
 mod day1;
 mod day2;
@@ -27,6 +31,7 @@ mod day14;
 mod day15;
 mod day16;
 mod day17;
+mod day18;
 mod infinl;
 
 
