@@ -56,6 +56,7 @@ fn term(inp: &str) -> Result<(&str, usize), ()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::Bencher;
 
     #[test]
     fn test_part1_ex1() {
@@ -72,6 +73,15 @@ mod tests {
         let result = part1(include_str!("input"));
         println!("Part 1: {}", result);
         assert_eq!(11297104473091, result);
+    }
+
+    #[bench]
+    fn bench_part1(b: &mut Bencher) {
+        let input = test::black_box(include_str!("input"));
+        b.iter(|| {
+            let result = part1(input);
+            assert_eq!(11297104473091, result);
+        });
     }
 }
 
