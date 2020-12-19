@@ -56,16 +56,32 @@ mod tests {
             day5::main::tests::test_part2_real();
             day6::main::tests::test_part1_real();
             day6::main::tests::test_part2_real();
-            day7::main::tests::test_part1_real();
-            day7::main::tests::test_part2_real();
-            day8::main::tests::test_part1_real();
-            day8::main::tests::test_part2_real();
+            day7::main_faster::tests::test_part1_real();
+            day7::main_faster::tests::test_part2_real();
+            day8::main_faster::tests::test_part1_real();
+            day8::main_faster::tests::test_part2_real();
             day9::main::tests::test_part1_real();
             day9::main::tests::test_part2_real();
             day10::main::tests::test_part1_real();
             day10::main::tests::test_part2_real();
             day11::main_part1_simd::tests::test_part1_simd_real();
             day11::main::tests::test_part2_real();
+            day12::main::tests::test_part1_real();
+            day12::main::tests::test_part2_real();
+            day13::main::tests::test_part1_real();
+            day13::main::tests::test_part2_real();
+            day14::main::tests::test_part1_real();
+            day14::main::tests::test_part2_real();
+            day15::main::tests::test_part1_real();
+            day15::main::tests::test_part2_real();
+            day16::main::tests::test_part1_real();
+            day16::main::tests::test_part2_real();
+            day17::main::tests::test_part1_real();
+            day17::main::tests::test_part2_real();
+            day18::main_part1::tests::test_part1_real();
+            day18::main_part2::tests::test_part2_real();
+            day19::main_part1::tests::test_part1_real();
+            day19::main_part2::tests::test_part2_real();
         });
     }
 }

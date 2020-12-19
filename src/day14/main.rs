@@ -106,7 +106,7 @@ enum Instruction {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use test::Bencher;
 
@@ -117,7 +117,7 @@ mod tests {
     }
 
     #[test]
-    fn test_part1_real() {
+    pub(crate) fn test_part1_real() {
         let result = part1(include_str!("input"));
         println!("Part 1: {}", result);
         assert_eq!(7611244640053, result);
@@ -130,7 +130,7 @@ mod tests {
     }
 
     #[test]
-    fn test_part2_real() {
+    pub(crate) fn test_part2_real() {
         let result = part2(include_str!("input"));
         println!("Part 2: {}", result);
         assert_eq!(3705162613854, result);

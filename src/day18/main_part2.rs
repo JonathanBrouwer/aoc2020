@@ -66,7 +66,7 @@ fn term(inp: &str) -> Result<(&str, usize), ()> {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
 
     #[test]
@@ -80,7 +80,7 @@ mod tests {
     }
 
     #[test]
-    fn test_part2_real() {
+    pub(crate) fn test_part2_real() {
         let result = part2(include_str!("input"));
         println!("Part 2: {}", result);
         assert_eq!(185348874183674, result);

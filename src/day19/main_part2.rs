@@ -90,7 +90,7 @@ enum Rule {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use test::Bencher;
 
@@ -107,7 +107,7 @@ mod tests {
     }
 
     #[test]
-    fn test_part2_real() {
+    pub(crate) fn test_part2_real() {
         let result = part2(include_str!("input"));
         println!("Part 2: {}", result);
         assert_eq!(359, result);
