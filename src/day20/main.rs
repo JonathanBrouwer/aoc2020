@@ -1,75 +1,128 @@
 use std::collections::HashMap;
+use integer_sqrt::IntegerSquareRoot;
+use std::fmt::{Debug, Formatter};
 
 fn part1(inp: &str) -> usize {
     let input = parse_input(inp);
+    let board = find_board(&input);
+    board.print();
 
-    let mut edgemap = HashMap::new();
-    for tile in &input {
-        for edge in tile.possible_edges().0 {
-            let mut list = edgemap.remove(&edge);
-            if list.is_none() { list = Some(Vec::new()); }
-            let mut list = list.unwrap();
-            list.push(tile);
-            edgemap.insert(edge, list);
-        }
-        for edge in tile.possible_edges().1 {
-            let mut list = edgemap.remove(&edge);
-            if list.is_none() { list = Some(Vec::new()); }
-            let mut list = list.unwrap();
-            list.push(tile);
-            edgemap.insert(edge, list);
-        }
-    }
-
-    //Create board
-    let mut board = Board::new(&edgemap);
-
-    //Find a corner
-    let corner = input.iter().find(|tile|
-        tile.possible_edges().0.iter().map(|e| edgemap.get(e).unwrap().len()).sum::<usize>() == 6
-    ).unwrap();
-    let corner_edges = &corner.possible_edges().0;
-    let corner_actual_edges: Vec<_> = corner_edges.iter().filter(|e| edgemap.get(*e).unwrap().len() == 2).collect();
-    board.board[0][0] = Some(BoardTile{tile: corner, right_edge: *corner_actual_edges[0], bottom_edge: *corner_actual_edges[1]});
-
-    //Find rest of the top row
-    for x in 1..10 {
-        let prev: BoardTile = board.board[x-1][0].unwrap();
-        let next = *edgemap.get(&prev.right_edge).unwrap().iter().find(|tile| tile.id != prev.tile.id).unwrap();
-        board.lock_in_from_left((x, 0), next, prev.right_edge);
-    }
-
-
-    println!("{:?}", board.board[0][0]);
-
-
-
-    // let mut counts = [0; 100];
-    // for val in edgemap.values() {
-    //     counts[*val] += 1;
-    // }
-
-    // input.iter().filter_map(|tile| {
-    //     let totalcount: usize = tile.possible_edges().iter()
-    //         .map(|e| edgemap.get(e).unwrap())
-    //         .sum();
-    //     if totalcount == 12 {
-    //         Some(tile.id)
-    //     }else{
-    //         None
-    //     }
-    // }).product()
-    0
+    let edgelength = input.len().integer_sqrt();
+    let id1 = board.board[0][0].unwrap().0.id;
+    let id2 = board.board[edgelength-1][0].unwrap().0.id;
+    let id3 = board.board[0][edgelength-1].unwrap().0.id;
+    let id4 = board.board[edgelength-1][edgelength-1].unwrap().0.id;
+    id1*id2*id3*id4
 }
 
 fn part2(inp: &str) -> usize {
     let input = parse_input(inp);
+    let board = find_board(&input);
 
-    return 0;
-    // return Err(())
+    let edgelength = input.len().integer_sqrt();
+    let mut finalboard = [[false; 8*12]; 8*12];
+    for y in 0..edgelength {
+        for x in 0..edgelength {
+            for dy in 0..8 {
+                for dx in 0..8 {
+                    finalboard[8*x+dx][8*y+dy] = board.board[x][y].unwrap().1[dx+1][dy+1];
+                }
+            }
+        }
+    }
+
+    //Pattern[y][x]
+    let pattern: Vec<Vec<_>> = include_str!("pattern.txt").lines().map(|line| {
+        line.chars().map(|c| c == '#').collect()
+    }).collect();
+
+    let finaltile = Tile::<96> { id: 0, grid: finalboard };
+    let maxcount = finaltile.orientations().iter().map(|orientation| {
+        let mut count = 0;
+        for y in 0..(8*edgelength-pattern.len()+1) {
+            'a: for x in 0..(8*edgelength-pattern[0].len()+1) {
+                for dy in 0..pattern.len() {
+                    for dx in 0..pattern[0].len() {
+                        if pattern[dy][dx] && !orientation[x+dx][y+dy] { continue 'a; }
+                    }
+                }
+                count += 1;
+            }
+        }
+        println!("{}", count);
+        count
+    }).max().unwrap();
+    finalboard.iter().flatten().filter(|x| **x).count() - pattern.iter().flatten().filter(|x| **x).count()*maxcount
 }
 
-fn parse_input(inp: &str) -> Vec<Tile> {
+fn find_board(input: &Vec<Tile<10>>) -> Board {
+    let edgelength = input.len().integer_sqrt();
+
+    let mut neighbours = HashMap::new();
+    for tile in input {
+        neighbours.insert(tile, Vec::new());
+    }
+
+    for tile1 in input {
+        for tile2 in input {
+            if tile1.id == tile2.id { continue; }
+            'outer: for orient1 in tile1.orientations() {
+                for orient2 in tile2.orientations() {
+                    if orient1[0] == orient2[0] {
+                        let nbs = neighbours.get_mut(tile1).unwrap();
+                        nbs.push(tile2);
+                        break 'outer;
+                    }
+                }
+            }
+        }
+    }
+
+    //Create board
+    let mut board = Board { board: [[None; 12]; 12] };
+
+    //Find top-left corner
+    let corner = *neighbours.iter().find(|(k,v)| v.len() == 2).unwrap().0;
+    let corner_config = *corner.orientations().iter().find(|orientation| {
+        let nbs = neighbours.get(corner).unwrap();
+        nbs[0].orientations().iter().any(|nborientation| {
+            orientation[9] == nborientation[0]
+        }) && nbs[1].orientations().iter().any(|nborientation| {
+            (0..10).all(|x| orientation[x][9] == nborientation[x][0])
+        })
+    }).unwrap();
+    board.board[0][0] = Some((corner, corner_config));
+
+    //Find top row
+    for x in 1..edgelength {
+        let prev = board.board[x-1][0].unwrap();
+        for nb in neighbours.get(prev.0).unwrap() {
+            for nb_orient in nb.orientations() {
+                if prev.1[9] == nb_orient[0] {
+                    board.board[x][0] = Some((nb, nb_orient));
+                }
+            }
+        }
+    }
+
+    //Find other rows
+    for y in 1..edgelength {
+        for x in 0..edgelength {
+            let prev = board.board[x][y-1].unwrap();
+            for nb in neighbours.get(prev.0).unwrap() {
+                for nb_orient in nb.orientations() {
+                    if (0..10).all(|dx| prev.1[dx][9] == nb_orient[dx][0]) {
+                        board.board[x][y] = Some((nb, nb_orient));
+                    }
+                }
+            }
+        }
+    }
+
+    board
+}
+
+fn parse_input(inp: &str) -> Vec<Tile<10>> {
     inp.split("\n\n").map(|tile| {
         let id: usize = tile.lines().next().unwrap()
             .split(" ").nth(1).unwrap()
@@ -87,66 +140,84 @@ fn parse_input(inp: &str) -> Vec<Tile> {
 
 #[derive(Debug)]
 struct Board<'a> {
-    edgemap: &'a HashMap<[bool; 10], Vec<&'a Tile>>,
-    //Tile, right edge, bottom edge
-    board: [[Option<BoardTile<'a>>; 10]; 10]
-}
-
-#[derive(Debug, Copy, Clone)]
-struct BoardTile<'a> {
-    tile: &'a Tile,
-    right_edge: [bool; 10],
-    bottom_edge: [bool; 10]
+    board: [[Option<(&'a Tile<10>, [[bool; 10]; 10])>; 12]; 12]
 }
 
 impl<'a> Board<'a> {
-    fn new(edgemap: &'a HashMap<[bool; 10], Vec<&'a Tile>>) -> Self {
-        Board{ edgemap, board: [[None; 10]; 10] }
-    }
-    fn lock_in_from_left(&mut self, pos: (usize, usize), tile: &'a Tile, left_edge: [bool; 10]) {
-        let (elist1, elist2) = tile.possible_edges();
-
-        let edge_list = if elist1.contains(&left_edge) { &elist1 } else { &elist2};
-        let right_edge = edge_list[(edge_list.iter().position(|e| *e == left_edge).unwrap() + 2)%4];
-        let bottom_edge = edge_list[(edge_list.iter().position(|e| *e == left_edge).unwrap() + 3)%4];
-
-        self.board[pos.0][pos.1] = Some(BoardTile {tile, right_edge, bottom_edge})
-    }
-}
-
-#[derive(Debug)]
-struct Tile {
-    id: usize,
-    grid: [[bool; 10]; 10]
-}
-
-impl Tile {
-    fn possible_edges(&self) -> (Vec<[bool; 10]>, Vec<[bool; 10]>) {
-        let mut edges = Vec::new();
-        let mut edges_alt = Vec::new();
-        //Top
-        edges.push(self.to_array(|i| self.grid[i][0]));
-        edges_alt.push(self.to_array(|i| self.grid[9-i][0]));
-        //Right
-        edges.push(self.to_array(|i| self.grid[9][i]));
-        edges_alt.push(self.to_array(|i| self.grid[9][9-i]));
-        //Bottom
-        edges_alt.push(self.to_array(|i| self.grid[i][9]));
-        edges.push(self.to_array(|i| self.grid[9-i][9]));
-        //Left
-        edges_alt.push(self.to_array(|i| self.grid[0][i]));
-        edges.push(self.to_array(|i| self.grid[0][9-i]));
-
-        (edges, edges_alt)
-    }
-
-    fn to_array<F>(&self, mapfun: F) -> [bool; 10] where
-        F: Fn(usize) -> bool {
-        let mut output = [false; 10];
-        for i in 0..10 {
-            output[i] = mapfun(i);
+    fn print(&self) {
+        for y in 0..12 {
+            for x in 0..12 {
+                if self.board[x][y].is_none() { continue }
+                print!("{} ", self.board[x][y].unwrap().0.id);
+            }
+            println!();
         }
-        output
+        println!();
+        for y in 0..12 {
+            for dy in 0..10 {
+                for x in 0..12 {
+                    for dx in 0..10 {
+                        if self.board[x][y].is_none() { continue }
+                        let val: bool = self.board[x][y].unwrap().1[dx][dy];
+                        if val {
+                            print!("#");
+                        } else {
+                            print!(".");
+                        }
+                    }
+                    print!(" ");
+                }
+                println!();
+            }
+            println!();
+        }
+    }
+}
+
+#[derive(Debug, Eq, PartialEq, Hash)]
+struct Tile<const LEN: usize> {
+    id: usize,
+    grid: [[bool; LEN]; LEN]
+}
+
+impl<const LEN: usize> Tile<LEN> {
+    fn orientations(&self) -> Vec<[[bool; LEN]; LEN]> {
+        let mut result = Vec::new();
+        let mut state = self.grid.clone(); result.push(state.clone());
+        Tile::rot90(&mut state);  result.push(state.clone());
+        Tile::rot90(&mut state);  result.push(state.clone());
+        Tile::rot90(&mut state);  result.push(state.clone());
+        Tile::transpose(&mut state); result.push(state.clone());
+        Tile::rot90(&mut state);  result.push(state.clone());
+        Tile::rot90(&mut state);  result.push(state.clone());
+        Tile::rot90(&mut state);  result.push(state.clone());
+
+        result
+    }
+
+    fn rot90(state: &mut [[bool; LEN]; LEN]) {
+        //Transpose
+        Tile::transpose(state);
+
+        //Reverse each row
+        for y in 0..LEN {
+            for x in 0..LEN/2 {
+                let temp = state[x][y];
+                state[x][y] = state[LEN-x-1][y];
+                state[LEN-x-1][y] = temp;
+            }
+        }
+    }
+
+    fn transpose(state: &mut [[bool; LEN]; LEN]) {
+        //Transpose
+        for y in 0..LEN {
+            for x in 0..y {
+                let temp = state[x][y];
+                state[x][y] = state[y][x];
+                state[y][x] = temp;
+            }
+        }
     }
 }
 
@@ -168,16 +239,14 @@ mod tests {
     }
 
     #[test]
-    fn test_part2_ex1() {
-        let result = part2(include_str!("example"));
-        assert_eq!(0, result);
-    }
-
-    #[test]
     fn test_part2_real() {
         let result = part2(include_str!("input"));
         println!("Part 2: {}", result);
-        assert_eq!(0, result);
+        assert_eq!(1957, result);
+
+        //<9036 (>12)
+
+        //<8721 (>33)
     }
 }
 
