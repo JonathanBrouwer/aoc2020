@@ -4,6 +4,7 @@
 #![feature(exclusive_range_pattern)]
 #![feature(or_patterns)]
 #![feature(const_generics)]
+#![feature(core_intrinsics)]
 extern crate lazy_static;
 extern crate scan_fmt;
 extern crate strum_macros;

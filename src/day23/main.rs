@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use std::intrinsics::unlikely;
 
 fn part1(inp: &str) -> String {
     let state = parse_input(inp);
@@ -27,20 +28,19 @@ fn solve(state: Vec<u32>, iterations: usize, max_num: u32) -> FakeCLL {
 
     for _ in 0..iterations {
         //Remove next 3 elements
-        let removed_vals: Vec<_> = (0..3).map(|_| cll.remove_next(cur_value)).collect();
+        let removed_val = cll.next(cur_value);
+        let removed_vals = [removed_val, cll.next(removed_val), cll.skip(removed_val, 2)];
+        cll.map[cur_value as usize] = cll.skip(cur_value, 4);
 
         //Find destination
-        let mut dest_val = cur_value - 1;
-        if dest_val == 0 { dest_val = max_num; }
+        let mut dest_val = if cur_value == 1 { max_num } else { cur_value - 1 };
         while removed_vals.contains(&dest_val) {
-            dest_val = dest_val - 1;
-            if dest_val == 0 { dest_val = max_num; }
+            dest_val = if dest_val == 1 { max_num } else { dest_val - 1 };
         }
 
         //Insert after destination
-        cll.add_after(dest_val, removed_vals[0]);
-        cll.add_after(removed_vals[0], removed_vals[1]);
-        cll.add_after(removed_vals[1], removed_vals[2]);
+        cll.map[removed_vals[2] as usize] = cll.next(dest_val);
+        cll.map[dest_val as usize] = removed_vals[0];
 
         //Increase index
         cur_value = cll.next(cur_value);
@@ -59,7 +59,7 @@ struct FakeCLL {
 
 impl FakeCLL {
     fn from_vec(vec: Vec<u32>) -> Self {
-        let mut fll = FakeCLL {map: vec![0; vec.len()+1] };
+        let mut fll = FakeCLL { map: vec![0; vec.len() + 1] };
 
         //Make linked list
         vec.windows(2).for_each(|slice| {
@@ -67,7 +67,7 @@ impl FakeCLL {
         });
 
         //Make circularly linked list
-        fll.map[vec[vec.len()-1] as usize] = vec[0];
+        fll.map[vec[vec.len() - 1] as usize] = vec[0];
 
         fll
     }
@@ -75,6 +75,15 @@ impl FakeCLL {
     #[inline]
     fn next(&self, cur: u32) -> u32 {
         self.map[cur as usize]
+    }
+
+    #[inline]
+    fn skip(&self, cur: u32, count: usize) -> u32 {
+        let mut res = cur;
+        for _ in 0..count {
+            res = self.next(res);
+        }
+        res
     }
 
     #[inline]
