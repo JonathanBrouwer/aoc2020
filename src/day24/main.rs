@@ -15,7 +15,7 @@ fn part2(inp: &str) -> usize {
 
     let mut board = get_board(input);
 
-    for i in 0..100 {
+    for _ in 0..100 {
         let mut counts = [[0u8; START_SIZE]; START_SIZE];
         for x in 1..START_SIZE-1 {
             for y in 1..START_SIZE-1 {
